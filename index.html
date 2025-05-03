@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja-JP">
+
+<head>
+  <meta charset="UTF-8">
+  <title>ジョルダン地図</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="assets/styles.css">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script defer src="assets/script.js"></script>
+</head>
+
+<body>
+  <div id="app" class="popup">
+    <div id="settings">
+      <form id="searchForm">
+        <label>From:</label>
+        <input type="text" id="from" value="" required>
+
+        <label>To:</label>
+        <input type="text" id="to" value="" required>
+
+        <label>Year:</label>
+        <input type="number" id="year" value="2025" required>
+
+        <label>Month:</label>
+        <input type="number" id="month" value="4" required>
+
+        <label>Day:</label>
+        <input type="number" id="day" value="29" required>
+
+        <label>Hour:</label>
+        <input type="number" id="hour" value="10" required>
+
+        <label>Minute:</label>
+        <input type="number" id="minute" value="0" required>
+
+        <label>Departure or Arrival:</label>
+        <select id="departOrArrive">
+          <option value="departure" selected>Departure</option>
+          <option value="arrival">Arrival</option>
+          <option value="first">First Train</option>
+          <option value="last">Last Train</option>
+        </select>
+
+        <label>Payment Type:</label>
+        <select id="paymentType">
+          <option value="ic" selected>IC Card</option>
+          <option value="ticket">Ticket</option>
+        </select>
+
+        <label>Discount Type:</label>
+        <select id="discountType">
+          <option value="none" selected>None</option>
+          <option value="zipangu">Zipangu</option>
+          <option value="zipangu_first">Zipangu First</option>
+          <option value="otona_zipangu">Otona Zipangu</option>
+          <option value="otona_middle">Otona Middle</option>
+          <option value="otona_west">Otona West</option>
+          <option value="shikoku_zipangu">Shikoku Zipangu</option>
+        </select>
+
+        <label>Commute Type:</label>
+        <select id="commuteType">
+          <option value="commute" selected>Commute</option>
+          <option value="offpeak_commute">Off-peak Commute</option>
+          <option value="university">University</option>
+          <option value="highschool">High School</option>
+          <option value="junior">Junior High</option>
+        </select>
+
+        <label>Airplane Use:</label>
+        <select id="airplaneUse">
+          <option value="forbid" selected>Forbid</option>
+          <option value="allow">Allow</option>
+        </select>
+
+        <label>Bus Use:</label>
+        <select id="busUse">
+          <option value="forbid" selected>Forbid</option>
+          <option value="allow">Allow</option>
+        </select>
+
+        <label>Express Train Use:</label>
+        <select id="expressTrainUse">
+          <option value="allow" selected>Allow</option>
+          <option value="prefer">Prefer</option>
+          <option value="avoid">Avoid</option>
+          <option value="forbid">Forbid</option>
+        </select>
+
+        <label>Allow Car/Taxi:</label>
+        <select id="allowCarTaxi">
+          <option value="true" selected>Allow</option>
+          <option value="false">Forbid</option>
+        </select>
+
+        <label>Allow Bike:</label>
+        <select id="allowBike">
+          <option value="true" selected>Allow</option>
+          <option value="false">Forbid</option>
+        </select>
+
+        <label>Sort By:</label>
+        <select id="sort">
+          <option value="recommend" selected>Recommended</option>
+          <option value="arrival">Arrival Time</option>
+          <option value="duration">Fastest</option>
+          <option value="transfer">Least Transfers</option>
+          <option value="price">Cheapest</option>
+        </select>
+
+        <label>Seat Preference:</label>
+        <select id="seatPreference">
+          <option value="any" selected>Any</option>
+          <option value="reserved">Reserved</option>
+          <option value="free">Free Seating</option>
+          <option value="green">Green Car</option>
+        </select>
+
+        <label>Preferred Train:</label>
+        <select id="preferredTrain">
+          <option value="nozomi" selected>Nozomi</option>
+          <option value="hikari">Hikari</option>
+          <option value="local">Local</option>
+        </select>
+
+        <label>Transfer Time Preference:</label>
+        <select id="transferTime">
+          <option value="normal" selected>Normal</option>
+          <option value="short">Short</option>
+          <option value="relaxed">Relaxed</option>
+        </select>
+
+        <label>Search Type:</label>
+        <select id="searchType">
+          <option value="1" selected>Standard</option>
+        </select>
+
+        <button type="submit">Search</button>
+      </form>
+    </div>
+
+    <div id="formContainer" class="displayed">
+      <div id="form">
+        <div id="form-contents">
+          <!-- <p>Days</p> -->
+          <input type="number" id="totalDuration" value="3" min="1" max="10" required>
+          <div id="items">
+            <div class="item">
+              <input type="text" name="Location" value="東京" required>
+            </div>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+            <div class="item">
+              <input type="text" name="Location" value="東京" required>
+              <select name="Duration">
+                <option value="3">3 hours</option>
+                <option value="6" selected>6 hours</option>
+                <option value="12">12 hours</option>
+                <option value="24">1 day</option>
+                <option value="36">1 day ½</option>
+                <option value="48">2 days</option>
+              </select>
+            </div>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+            <div class="item">
+              <input type="text" name="Location" value="東京" required>
+              <select name="Duration">
+                <option value="3">3 hours</option>
+                <option value="6" selected>6 hours</option>
+                <option value="12">12 hours</option>
+                <option value="24">1 day</option>
+                <option value="36">1 day ½</option>
+                <option value="48">2 days</option>
+              </select>
+            </div>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+            <div class="item">
+              <input type="text" name="Location" value="東京" required>
+              <select name="Duration">
+                <option value="3">3 hours</option>
+                <option value="6" selected>6 hours</option>
+                <option value="12">12 hours</option>
+                <option value="24">1 day</option>
+                <option value="36">1 day ½</option>
+                <option value="48">2 days</option>
+              </select>
+            </div>
+            <div id="more"><ion-icon name="add-outline"></ion-icon>Add Item</div>
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+            <div class="item">
+              <input type="text" name="Location" value="東京" required>
+            </div>
+          </div>
+        </div>
+        <button id="submit">Submit</button>
+      </div>
+    </div>
+
+    <div id="results">
+
+    </div>
+  </div>
+</body>
+
+</html>
