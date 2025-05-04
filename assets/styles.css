@@ -2,8 +2,27 @@ input[type="number"] {
     display: none;
 }
 
-input[type='date']::-webkit-calendar-picker-indicator {
+/* .segments{
     display: none;
+} */
+
+input[type='datetime-local']::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--thirdary-color) inset !important;
+}
+
+
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px var(--secondary-color) inset !important;
+}
+
+input:-webkit-autofill {
+    -webkit-text-fill-color: var(--background-color) !important;
 }
 
 body[theme="dark"] {
@@ -217,7 +236,6 @@ header img {
 }
 
 .setting-group:hover {
-    cursor: pointer;
     background: var(--thirdary-color);
 }
 
@@ -248,14 +266,38 @@ header img {
     gap: 2px;
 }
 
+#more {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 100px;
+    background: var(--secondary-color);
+    padding: 5px;
+    position: absolute;
+    border: 1px solid var(--primary-color);
+    transform: translateX(632%);
+}
+
+.stripe {
+    background-image: linear-gradient(#FFFFFF 50%, transparent 50%, transparent);
+    background-size: 36px 36px;
+    border: 1px solid;
+}
+
+.line-color {
+    display: block;
+    width: 5px;
+    height: 100px;
+}
+
+#more ion-icon {
+    font-size: 20px;
+}
+
 #app.header .item {
     display: flex;
     align-items: center;
     gap: 5px;
-}
-
-#app.header #more {
-    display: none;
 }
 
 #app.header ion-icon[name="chevron-forward-outline"] {
@@ -346,6 +388,7 @@ header img {
 
 .item:last-child {
     border-radius: 0 10px 10px 0;
+    padding-left: 30px;
 }
 
 #submit {
@@ -371,7 +414,7 @@ header img {
 }
 
 .item:hover,
-#dates:hover {
+#dates div:hover {
     cursor: pointer;
     background: var(--thirdary-color);
 }
