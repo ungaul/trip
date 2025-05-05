@@ -1,6 +1,4 @@
-// assets/script.js
 $(document).ready(function () {
-    // Haversine formula
     function haversine(lat1, lon1, lat2, lon2) {
         const R = 6371;
         const toRad = d => d * Math.PI / 180;
@@ -12,7 +10,6 @@ $(document).ready(function () {
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    // Overpass → nearest station name
     async function findNearestStation(lat, lon) {
         const query = `[out:json];node(around:5000,${lat},${lon})[railway=station];out;`;
         const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
@@ -24,14 +21,36 @@ $(document).ready(function () {
                 const d = haversine(lat, lon, n.lat, n.lon);
                 if (d < minDist) { minDist = d; best = n; }
             });
-            if (!best) return null;
-            return best.tags && (best.tags['name:ja'] || best.tags.name) || null;
+            return best && (best.tags && (best.tags['name:ja'] || best.tags.name)) || null;
         } catch {
             return null;
         }
     }
 
-    // Parse URL & prefill form
+    function formatDateWithoutYear(dateTimeStr) {
+        const datePart = dateTimeStr.split(' ')[0];
+        const parts = datePart.split('/');
+        if (parts.length !== 3) return dateTimeStr;
+        const mm = parts[1].padStart(2, '0');
+        const dd = parts[2].padStart(2, '0');
+        return `${mm}/${dd}`;
+    }
+
+    function getNotificationMessage(key) {
+        switch (key) {
+            case 'no_result':
+                return '検索結果が見つかりませんでした。';
+            case 'no_result_with_expressTrainUse_forbid':
+                return '特急利用不可では結果がありませんでした。特急利用を許可して再検索しました。';
+            case 'no_result_with_airplaneUse_forbid':
+                return '飛行機利用不可では結果がありませんでした。飛行機利用を許可して再検索しました。';
+            case 'no_result_with_busUse_forbid':
+                return 'バス利用不可では結果がありませんでした。バス利用を許可して再検索しました。';
+            default:
+                return '';
+        }
+    }
+
     const params = new URLSearchParams(window.location.search);
     function prefill() {
         const locs = params.getAll('from');
@@ -41,57 +60,38 @@ $(document).ready(function () {
         if (locs.length) {
             locs.forEach((f, i) => {
                 $('#items').append(
-                    `<div class="item"><span>From:</span>
-                       <input type="text" name="Location" value="${f}" placeholder="…">
-                     </div>`
+                    `<div class="item"><span>From:</span><input type="text" name="Location" value="${f}" placeholder="…"></div>`
                 );
                 if (tos[i]) {
                     $('#items').append(
-                        `<div class="item"><span>To:</span>
-                           <input type="text" name="Location" value="${tos[i]}" placeholder="…">
-                         </div>`
+                        `<div class="item"><span>To:</span><input type="text" name="Location" value="${tos[i]}" placeholder="…"></div>`
                     );
                 }
             });
         } else {
             $('#items').append(`
-                <div class="item"><span>From:</span>
-                  <input type="text" name="Location" id="from" placeholder="東京">
-                </div>
-                <div class="item"><span>To:</span>
-                  <input type="text" name="Location" placeholder="大阪">
-                </div>
+                <div class="item"><span>From:</span><input type="text" name="Location" id="from" placeholder="東京"></div>
+                <div class="item"><span>To:</span><input type="text" name="Location" placeholder="大阪"></div>
             `);
         }
 
-        // Dates
-        if (params.has('departure')) {
-            $('input[name="Departure"]').val(params.get('departure'));
-        } else {
-            $('input[name="Departure"]').val(new Date().toISOString().slice(0,16));
-        }
+        $('input[name="Departure"]').val(
+            params.has('departure') ? params.get('departure') : new Date().toISOString().slice(0, 16)
+        );
         if (params.has('return')) {
             $('input[name="Return"]').val(params.get('return'));
         }
-
-        // Préfill des selects personnalisés
-        const keys = [
-            'departOrArrive','paymentType','discountType','commuteType',
-            'airplaneUse','busUse','expressTrainUse','allowCarTaxi','allowBike',
-            'sort','seatPreference','preferredTrain','transferTime','searchType'
-        ];
-        keys.forEach(k => {
-            if (params.has(k)) {
-                const val = params.get(k);
-                const $sel = $(`#${k}`);
-                $sel.attr('data-current', val);
-                $sel.children(`div[value="${val}"]`).addClass('selected');
-            }
-        });
+        ['departOrArrive', 'paymentType', 'discountType', 'commuteType', 'airplaneUse', 'busUse', 'expressTrainUse', 'allowCarTaxi', 'allowBike', 'sort', 'seatPreference', 'preferredTrain', 'transferTime', 'searchType']
+            .forEach(k => {
+                if (params.has(k)) {
+                    const val = params.get(k);
+                    $(`#${k}`).attr('data-current', val)
+                        .children(`div[value="${val}"]`).addClass('selected');
+                }
+            });
     }
     prefill();
 
-    // Si on n'a pas de "from" en URL, on géolocalise
     const $fromField = $('#from');
     if ($fromField.length && !$fromField.val()) {
         navigator.geolocation.getCurrentPosition(async pos => {
@@ -100,169 +100,170 @@ $(document).ready(function () {
         });
     }
 
-    // Rendu des résultats
     function renderTrips(data, $container) {
-        if (!data || !Array.isArray(data.results)) {
-            $container.append('<div class="error">Données invalides</div>');
+        // Normalize data.results array
+        let arr = [];
+        if (Array.isArray(data.results)) {
+            arr = data.results;
+        } else if (data.results && Array.isArray(data.results.results)) {
+            arr = data.results.results;
+        }
+        if (!arr.length) {
+            $container.append('<div class="error">データが無効です</div>');
             return;
         }
-        // On ne garde que la première route
-        const trip = data.results[0];
+        const trip = arr[0];
         const $trip = $('<div>').addClass('trip');
-        const $td   = $('<div>').addClass('trip-data');
+        const $top = $('<div>').addClass('trip-data top');
+        const $leftInfo = $('<div>').addClass('left-info');
+        const $rightInfo = $('<div>').addClass('right-info');
 
-        // --- Top summary ---
-        const $top  = $('<div>').addClass('top');
-        const $info = $('<div>').addClass('info');
-        $info.append(
-            $('<div>').addClass('departure')
-                .append($('<div>').addClass('date').text(`${trip.date} ${trip.departureTime}`))
-                .append($('<div>').addClass('place').text(trip.stations[0]?.stationName||''))
-        );
-        const arrTxt = trip.date.includes('→') ? trip.arrivalTime : `${trip.date} ${trip.arrivalTime}`;
-        $info.append(
-            $('<div>').addClass('arrival')
-                .append($('<div>').addClass('date').text(arrTxt))
-                .append($('<div>').addClass('place').text(trip.stations.slice(-1)[0]?.stationName||''))
-        );
-        $top.append($info);
-        const $bot = $('<div>').addClass('bottom');
-        $bot.append(
-            $('<div>').addClass('duration')
-                .append($('<span>').addClass('icon-clock').text('🕒'))
-                .append($('<span>').addClass('time').text(trip.duration))
-                .append($('<span>').addClass('line').text(trip.segments[0]?.line||''))
-        );
-        $bot.append(
-            $('<div>').addClass('meta').html(
-                `乗換: ${trip.transfers} &nbsp;|&nbsp; CO₂: ${trip.co2.emission} / 自動車比 ${trip.co2.reduction}`
+        // Build info
+        const shortDate = formatDateWithoutYear(trip.date);
+        const $info = $('<div>').addClass('info')
+            .append(
+                $('<div>').addClass('departure')
+                    .append($('<div>').addClass('date').text(`${shortDate} ${trip.departureTime}`))
+                    .append($('<div>').addClass('place').text(trip.stations[0]?.stationName || ''))
             )
-        );
-        $bot.append($('<div>').addClass('price').text(trip.price));
-        $top.append($bot);
-        $td.append($top);
+            .append(
+                $('<div>').addClass('arrival')
+                    .append($('<div>').addClass('date').text(
+                        trip.date.includes('→') ? trip.arrivalTime : `${shortDate} ${trip.arrivalTime}`
+                    ))
+                    .append($('<div>').addClass('place').text(trip.stations.slice(-1)[0]?.stationName || ''))
+            );
+        $leftInfo.append($info);
+        $rightInfo.html('<div class="moreInfo"><ion-icon name="chevron-down-outline"></ion-icon></div>');
 
-        // --- Segments ---
-        const $segs = $('<div>').addClass('segments');
-        trip.segments.forEach(seg => {
-            const $s = $('<div>').addClass('segment');
-            $s.append($('<div>').addClass('seg-time').text(`${seg.departure} → ${seg.arrival}`));
+        const $meta = $('<div>').addClass('bottom')
+            .append($('<div>').addClass('duration').html(`<span>時間</span>${trip.duration}`))
+            .append($('<div>').addClass('transfers').html(`<span>乗換</span>${trip.transfers}`))
+            .append($('<div>').addClass('emission').html(`<span>CO₂</span>${trip.co2.emission}`))
+            .append($('<div>').addClass('co2-red').html(`<span>自動車比</span>${trip.co2.reduction}`))
+            .append($('<div>').addClass('price').html(`<span>総額</span>${trip.price}`));
+        $leftInfo.append($meta);
+        $top.append($leftInfo, $rightInfo);
+        $trip.append($top);
+
+        // Build timeline
+        const changeMap = {};
+        trip.changes.forEach(ch => { changeMap[ch.stationName] = ch; });
+
+        function makeStop(name) {
+            const $st = $('<div>').addClass('stop');
+            const ch = changeMap[name];
+            if (ch) {
+                const $detail = $('<div>').addClass('stop-change');
+                if (ch.transferTime) $detail.append($('<div>').text(`乗換: ${ch.transferTime}`));
+                if (ch.waitTime) $detail.append($('<div>').text(`待ち: ${ch.waitTime}`));
+                const station = trip.stations.find(s => s.stationName === name);
+                if (station && station.nonStop) {
+                    $detail.append($('<div>').text('≪降車不要≫').css({ color: '#666', 'font-style': 'italic', 'font-size': '90%' }));
+                }
+                $st.append($detail);
+            }
+            $st.append($('<span>').addClass('stop-dot'))
+                .append($('<div>').addClass('stop-label').text(name));
+            if (ch) {
+                const $detail2 = $('<div>').addClass('stop-change2');
+                if (ch.arrivalPlatform) $detail2.append($('<div>').text(`着線: ${ch.arrivalPlatform}`));
+                if (ch.departurePlatform) $detail2.append($('<div>').text(`発線: ${ch.departurePlatform}`));
+                if ($detail2.children().length) $st.append($detail2);
+            }
+            return $st;
+        }
+
+        const $timeline = $('<div>').addClass('timeline');
+        $timeline.append(makeStop(trip.stations[0]?.stationName || ''));
+        trip.segments.forEach((seg, idx) => {
+            const $seg = $('<div>').addClass('segment');
+            const $segTiming = $('<div>').addClass('segTiming');
             const $line = $('<div>').addClass('seg-line');
+            $segTiming.append($line)
+                .append($('<div>').addClass('seg-time').text(`${seg.departure} → ${seg.arrival}`))
+                .append($('<div>').addClass('seg-duration').text(seg.duration));
             if (seg.color) {
-                const $col = $('<span>').addClass('line-color').css({
-                    'background-color': seg.color,
-                    'border-color': seg.color
-                });
+                const $col = $('<span>').addClass('line-color').css({ 'background-color': seg.color, 'border-color': seg.color });
                 if (seg.striped) $col.addClass('stripe');
                 $line.append($col);
             }
-            if (seg.timeLink) {
-                $line.append($('<a>').attr({ href: seg.timeLink, target: '_blank' }).text(seg.line));
-            } else {
-                $line.append($('<span>').text(seg.line));
+            if (seg.trainType === 'ＪＲ') {
+                $line.append($('<span>').addClass('train-type'));
+            } else if (seg.trainType) {
+                $line.append($('<span>').addClass('train-type'));
             }
-            if (seg.trainType) {
-                $line.append($('<span>').addClass('train-type').text(`（${seg.trainType}）`));
-            }
-            $s.append($line)
-              .append($('<div>').addClass('seg-duration').text(seg.duration))
-              .append($('<div>').addClass('seg-fare').text(seg.fare))
-              .append($('<div>').addClass('seg-distance').text(seg.distance));
-            $segs.append($s);
+            $line.append(seg.timeLink ? $('<p>').text(seg.line) : $('<span>').text(seg.line));
+            $seg.append($line)
+                .append($('<div>').addClass('seg-distance').text(seg.distance))
+                .append($('<div>').addClass('seg-fare').text(seg.fare));
+            $timeline.append($seg);
+            $seg.prepend($segTiming);
+            const nextName = trip.stations[idx + 1]?.stationName || '';
+            $timeline.append(makeStop(nextName));
         });
-        $td.append($segs);
 
-        // --- Changes ---
-        if (Array.isArray(trip.changes)) {
-            const $chgs = $('<div>').addClass('changes');
-            trip.changes.forEach(ch => {
-                $chgs.append(
-                    $('<div>').addClass('change')
-                        .append($('<div>').addClass('change-station').text(ch.stationName))
-                        .append($('<div>').addClass('change-transfer').text(`乗換: ${ch.transferTime}`))
-                        .append($('<div>').addClass('change-wait').text(`待ち: ${ch.waitTime}`))
-                        .append($('<div>').addClass('change-platforms')
-                            .text(`着線: ${ch.arrivalPlatform} / 発線: ${ch.departurePlatform}`))
-                );
-            });
-            $td.append($chgs);
-        }
-
-        $trip.append($td);
+        $trip.append($timeline);
         $container.append($trip);
     }
 
-    // Recherche et mise à jour de l'URL
     async function triggerSearch(updateURL = true) {
-        const raw = $('#items .item input[name="Location"]').map((i,el)=>el.value.trim()).get();
+        const raw = $('#items .item input[name="Location"]').map((i, el) => el.value.trim()).get();
         if (raw.length < 2) {
-            $('#trips').text('Veuillez saisir au moins deux lieux.');
+            $('#notification').addClass('active').html('<ion-icon name="alert-circle-outline"></ion-icon><p>出発地と到着地を2つ以上入力してください。</p>');
             return;
         }
+        $('#notification').empty();
         const depVal = $('input[name="Departure"]').val();
-        const [yp, tp] = depVal.split('T');
-        const [year,month,day] = yp.split('-');
-        const [hour,minute] = tp.split(':');
+        const [YMD, HMS] = depVal.split('T');
+        const [year, month, day] = YMD.split('-');
+        const [hour, minute] = HMS.split(':');
+        const base = { year, month, day, hour, minute };
+        ['departOrArrive', 'paymentType', 'discountType', 'commuteType', 'airplaneUse', 'busUse', 'expressTrainUse', 'allowCarTaxi', 'allowBike', 'sort', 'seatPreference', 'preferredTrain', 'transferTime', 'searchType']
+            .forEach(k => base[k] = $(`#${k}`).attr('data-current') || '');
 
-        // Récupère TOUS les paramètres depuis data-current
-        const base = { year,month,day,hour,minute };
-        [
-            'departOrArrive','paymentType','discountType','commuteType',
-            'airplaneUse','busUse','expressTrainUse','allowCarTaxi','allowBike',
-            'sort','seatPreference','preferredTrain','transferTime','searchType'
-        ].forEach(k => {
-            base[k] = $(`#${k}`).attr('data-current') || '';
-        });
-
-        console.log('[triggerSearch] Params:', base);
-
-        // Construit la nouvelle URL
-        const newParams = new URLSearchParams();
-        raw.forEach((v,i)=> newParams.append(i%2===0?'from':'to', v));
-        newParams.set('departure', depVal);
-        const retVal = $('input[name="Return"]').val();
-        if (retVal) newParams.set('return', retVal);
-        Object.entries(base).forEach(([k,v])=> newParams.set(k,v));
-        if (updateURL) history.replaceState(null,'','?'+newParams.toString());
+        const newP = new URLSearchParams();
+        raw.forEach((v, i) => newP.append(i % 2 === 0 ? 'from' : 'to', v));
+        newP.set('departure', depVal);
+        const ret = $('input[name="Return"]').val(); if (ret) newP.set('return', ret);
+        Object.entries(base).forEach(([k, v]) => newP.set(k, v));
+        if (updateURL) history.replaceState(null, '', '?' + newP);
 
         $('#trips').empty();
-        for (let i=0; i<raw.length-1; i++) {
-            const from = raw[i], to = raw[i+1];
-            const params = {...base,from,to};
+        for (let i = 0; i < raw.length - 1; i++) {
+            const from = raw[i], to = raw[i + 1];
+            const params = { ...base, from, to };
             const url = 'http://localhost:3000/scrape?' + $.param(params);
             const $grp = $('<div>').addClass('leg');
-            const $list= $('<div>').addClass('trip-list');
+            const $list = $('<div>').addClass('trip-list');
             $grp.append($list);
             $('#trips').append($grp);
             try {
                 const data = await $.getJSON(url);
+                const notificationKey = data.notification || data.results?.notification;
+                if (notificationKey) {
+                    $('#notification').addClass('active').html("<ion-icon name='alert-circle-outline'></ion-icon><p>" + getNotificationMessage(notificationKey) + "</p>");
+                }
                 renderTrips(data, $list);
             } catch {
+                $('#notification').addClass('active').html('<ion-icon name="alert-circle-outline"></ion-icon><p>エラーが発生しました。しばらくしてから再度お試しください。</p>');
                 $list.append($('<div>').addClass('error').text('Erreur'));
             }
         }
     }
 
-    // Lancement manuel
-    $('#submit').click(e=>{ e.preventDefault(); triggerSearch(); });
-    $('#formContainer').on('keydown','input, select', e=> {
-        if (e.key==='Enter') { e.preventDefault(); triggerSearch(); }
-    });
-
-    // Sélection d’une option
-    $('.select').on('click','div[value]',function(e){
+    $('#submit').click(e => { e.preventDefault(); triggerSearch(); });
+    $('#formContainer').on('keydown', 'input, select', e => { if (e.key === 'Enter') { e.preventDefault(); triggerSearch(); } });
+    $('.select').on('click', 'div[value]', function (e) {
         e.stopPropagation();
         const $this = $(this);
         const val = $this.attr('value');
         const $sel = $this.closest('.select');
-        $sel.attr('data-current', val);
-        $sel.children().removeClass('selected');
+        $sel.attr('data-current', val).children().removeClass('selected');
         $this.addClass('selected');
-        console.log(`[SELECT] ${$sel.attr('id')} = ${val}`);
         triggerSearch();
     });
 
-    // Auto-run si on a déjà from/to
     if (params.has('from') && params.has('to')) {
         triggerSearch(false);
     }
