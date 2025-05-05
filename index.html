@@ -6,12 +6,17 @@
   <title>ジョルダン旅</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <link rel="stylesheet" href="assets/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="shortcut icon" href="assets/favicon.png" type="image/x-icon">
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script defer src="assets/script.js"></script>
   <script defer src="assets/anim.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+
 </head>
 
 <body theme="light">
@@ -224,9 +229,18 @@
       </div>
     </div>
 
-    <div id="trips"></div>
+    <div id="content">
+      <div id="trips"></div>
+      <div id="panel"></div>
+    </div>
 
     <div id="notification"></div>
+
+    <div id="calendar"></div>
+
+    <footer>
+      <a href="https://github.com/ungaul/jorudan-map" target="_blank"><ion-icon name="logo-github"></ion-icon></a>
+    </footer>
   </div>
 </body>
 

@@ -3,31 +3,25 @@ $(document).ready(function () {
         const $container = $('#settings-content');
         const containerWidth = $container.innerWidth();
         const gap = 5;
-
         const $groups = $container.find('.setting-group');
         const $moreBtn = $('<div class="more-settings"><ion-icon name="add-outline"></ion-icon> More Settings</div>');
         $container.append($moreBtn);
         const moreWidth = $moreBtn.outerWidth(true);
         $moreBtn.remove();
-
-        let totalWidth = 0;
-        let shownCount = 0;
-
+        let totalWidth = 0, shownCount = 0;
         $groups.each(function () {
             const $el = $(this);
-            const itemWidth = $el.outerWidth(true) + gap;
-
-            if (totalWidth + itemWidth + moreWidth <= containerWidth) {
+            const w = $el.outerWidth(true) + gap;
+            if (totalWidth + w + moreWidth <= containerWidth) {
                 $el.show();
-                totalWidth += itemWidth;
+                totalWidth += w;
                 shownCount++;
             } else {
                 $el.hide();
             }
         });
-
         if (shownCount < $groups.length) {
-            if ($('.more-settings').length === 0) {
+            if (!$('.more-settings').length) {
                 $container.append('<div class="more-settings"><ion-icon name="add-outline"></ion-icon> More Settings</div>');
             }
         } else {
@@ -37,21 +31,15 @@ $(document).ready(function () {
 
     $('.setting-group').on('click', function (e) {
         e.stopPropagation();
-        const $group = $(this);
-        const $select = $group.find('.select');
-
-        if ($group.hasClass('open')) {
-            $group.removeClass('open');
+        const $g = $(this), $sel = $g.find('.select');
+        if ($g.hasClass('open')) {
+            $g.removeClass('open');
             return;
         }
-
         $('.setting-group').removeClass('open');
-
-        const offset = $group.offset();
-        const height = $group.outerHeight();
-
-        $select.css({ top: offset.top + height + 5, left: offset.left });
-        $group.addClass('open');
+        const off = $g.offset(), h = $g.outerHeight();
+        $sel.css({ top: off.top + h + 5, left: off.left });
+        $g.addClass('open');
     });
 
     $(document).on('click', function () {
@@ -59,14 +47,13 @@ $(document).ready(function () {
     });
 
     $(document).on('click', '.more-settings', function () {
-        const $btn = $(this);
-        const $settings = $('#settings');
-        if ($settings.hasClass('expanded')) {
-            $settings.removeClass('expanded');
+        const $btn = $(this), $s = $('#settings');
+        if ($s.hasClass('expanded')) {
+            $s.removeClass('expanded');
             $btn.html('<ion-icon name="add-outline"></ion-icon> More Settings');
             applySettingsRowLimit();
         } else {
-            $settings.addClass('expanded');
+            $s.addClass('expanded');
             $btn.html('<ion-icon name="remove-outline"></ion-icon> Less Settings');
             $('.setting-group').show();
         }
@@ -78,47 +65,79 @@ $(document).ready(function () {
 
     $('#trips').on('click', '.trip', function () {
         $(this).find('.timeline').toggleClass('active');
-        $('.moreInfo').toggleClass('active');
     });
 
     $('#notification').on('click', function () {
         $(this).removeClass('active');
     });
 
-    // Initialize dynamic intermediate stops UI
-    const maxStops = 5;
-    function insertMoreButtons() {
-        $('#items .item').each(function () {
-            if (!$(this).prev().hasClass('more')) {
-                $(this).before('<div class="more"><ion-icon name="add-outline"></ion-icon></div>');
+    const maxStops = 4;
+
+    function refreshMoreIcons() {
+        const $items = $('#items .item');
+        $items.each(function (i) {
+            const $it = $(this);
+            $it.find('.more').remove();
+            if (i < $items.length - 1) {
+                $it.append('<div class="more"><ion-icon name="add-outline"></ion-icon></div>');
             }
         });
     }
-    insertMoreButtons();
 
-    // Add new stop after clicking +
+    function refreshCloses() {
+        const $items = $('#items .item');
+        const len = $items.length;
+        $items.find('.close').remove();
+        $items.each(function (i) {
+            if (i > 0 && i < len - 1) {
+                $(this).append('<ion-icon class="close" name="close-outline"></ion-icon>');
+            }
+        });
+    }
+
+    refreshMoreIcons();
+    refreshCloses();
+
+    if ($('#items .item').length > 2) {
+        $('#app').addClass('vertical');
+    }
+
     $('#items').on('click', '.more', function (e) {
         e.preventDefault();
-        const $allItems = $('#items .item');
-        const currentStops = $allItems.length - 1; // initial from/to count = 2
-        if (currentStops < maxStops + 2) {
-            const $newItem = $(
-                '<div class="item">' +
-                    '<span>To:</span>' +
-                    '<input type="text" name="Location" placeholder="…">' +
-                    '<ion-icon name="close-outline"></ion-icon>' +
-                '</div>'
-            );
-            $(this).after($newItem);
-            insertMoreButtons();
-        }
+        const $all = $('#items .item');
+        if ($all.length >= maxStops + 2) return;
+        $('#app').addClass('vertical');
+        $(this).closest('.item').after(
+            '<div class="item"><span>By:</span><input type="text" name="Location" placeholder="…"><ion-icon class="close" name="close-outline"></ion-icon></div>'
+        );
+        refreshMoreIcons();
+        refreshCloses();
     });
 
-    // Remove stop on close
-    $('#items').on('click', '.item ion-icon[name="close-outline"]', function (e) {
+    $('#items').on('click', '.item .close', function (e) {
         e.stopPropagation();
-        const $item = $(this).closest('.item');
-        $item.prev('.more').remove();
-        $item.remove();
+        $(this).closest('.item').remove();
+        refreshMoreIcons();
+        refreshCloses();
     });
+
+    async function triggerSearch(updateURL = true) {
+        $('#loader').appendTo('#trips').addClass('active'); // show loader
+        // ... existing search logic ...
+        // after each leg appended:
+        // append loader
+        $('.leg').append(`
+          <div id="loader" class="active">
+            <div class="lds-spinner">
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+            </div>
+          </div>
+        `);
+        // when all trips rendered:
+        $('#loader').removeClass('active');
+    }
+
+    $('#submit').click(e => { e.preventDefault(); triggerSearch(); });
 });
