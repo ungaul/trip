@@ -6,6 +6,29 @@ input[type="number"] {
     display: none;
 } */
 
+/* width */
+::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+    height: 8px;
+    background: transparent;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
+
+::-webkit-scrollbar-corner {
+    display: none;
+}
+
 input[type='datetime-local']::-webkit-calendar-picker-indicator {
     display: none;
 }
@@ -60,6 +83,7 @@ body {
     --primary-color: #0c131f;
     --secondary-color: #242b35;
     --thirdary-color: #2b3442;
+    --scrollbar-width: 10px;
 }
 
 ::selection {
@@ -181,7 +205,7 @@ header img {
     bottom: 20px;
     right: 20px;
     background: var(--background-color);
-    opacity: 2;
+    z-index: 3;
     transform: translateY(200%);
     border: 1px solid var(--background-alt-color);
     border-radius: 10px;
@@ -363,10 +387,13 @@ input[type="text"] {
     display: flex;
 }
 
-#content{
+#content {
     display: flex;
     gap: 15px;
     padding: 20px;
+    min-height: calc(100vh - 225px - 33px);
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 #trips {
@@ -379,7 +406,7 @@ input[type="text"] {
     width: 100%;
 }
 
-#panel{
+#panel {
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -704,6 +731,8 @@ footer {
     justify-content: center;
     align-items: center;
     z-index: 1;
+    /* position: sticky;
+    bottom: 0; */
 }
 
 footer ion-icon {
@@ -716,9 +745,7 @@ footer ion-icon:hover {
     background: var(--secondary-color);
 }
 
-.dropdown{
-
-}
+.dropdown {}
 
 .flatpickr-calendar,
 .flatpickr-months .flatpickr-month,
