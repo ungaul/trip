@@ -13,7 +13,7 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script defer src="assets/script.js"></script>
+  <script src="assets/script.js"></script>
   <script defer src="assets/anim.js"></script>
   <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
 
@@ -50,33 +50,37 @@
             <form id="searchForm">
               <h1>Options</h1>
               <div id="settings-content">
-                <div class="setting-group">
-                  <div class="departOrArrive">Order</div>
-                  <div class="setting">
+                <div id="settings-list">
+
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="departOrArrive">Order</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="departOrArrive">
                       <div value="departure">Departure</div>
                       <div value="arrival">Arrival</div>
                       <div value="first">First Train</div>
                       <div value="last">Last Train</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="paymentType">Payment Type</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="paymentType">Payment Type</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="paymentType">
                       <div value="ic">IC Card</div>
                       <div value="ticket">Ticket</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="discountType">Discount Type</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="discountType">Discount Type</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="discountType">
                       <div value="none">None</div>
                       <div value="zipangu">Zipangu</div>
@@ -86,13 +90,13 @@
                       <div value="otona_west">Otona West</div>
                       <div value="shikoku_zipangu">Shikoku Zipangu</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="commuteType">Commute Type</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="commuteType">Commute Type</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="commuteType">
                       <div value="commute">Commute</div>
                       <div value="offpeak_commute">Off-peak Commute</div>
@@ -100,70 +104,70 @@
                       <div value="highschool">High School</div>
                       <div value="junior">Junior High</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="expressTrainUse">Express Train Use</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="expressTrainUse">Express Train Use</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="expressTrainUse">
                       <div value="allow">Allow</div>
                       <div value="prefer">Prefer</div>
                       <div value="avoid">Avoid</div>
                       <div value="forbid">Forbid</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="airplaneUse">Airplane Use</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="airplaneUse">Airplane Use</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="airplaneUse">
                       <div value="forbid">Forbid</div>
                       <div value="allow">Allow</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="busUse">Bus Use</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="busUse">Bus Use</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="busUse">
                       <div value="forbid">Forbid</div>
                       <div value="allow">Allow</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="allowCarTaxi">Allow Car/Taxi</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="allowCarTaxi">Allow Car/Taxi</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="allowCarTaxi">
                       <div value="true">Allow</div>
                       <div value="false">Forbid</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="allowBike">Allow Bike</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="allowBike">Allow Bike</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="allowBike">
                       <div value="true">Allow</div>
                       <div value="false">Forbid</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="sort">Sort By</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="sort">Sort By</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="sort">
                       <div value="recommend">Recommended</div>
                       <div value="arrival">Arrival Time</div>
@@ -171,54 +175,53 @@
                       <div value="transfer">Least Transfers</div>
                       <div value="price">Cheapest</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="seatPreference">Seat Preference</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="seatPreference">Seat Preference</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="seatPreference">
                       <div value="any">Any</div>
                       <div value="reserved">Reserved</div>
                       <div value="free">Free Seating</div>
                       <div value="green">Green Car</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="preferredTrain">Preferred Train</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="preferredTrain">Preferred Train</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="preferredTrain">
                       <div value="nozomi">Nozomi</div>
                       <div value="hikari">Hikari</div>
                       <div value="local">Local</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="transferTime">Transfer Time</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="transferTime">Transfer Time</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="transferTime">
                       <div value="normal">Normal</div>
                       <div value="short">Short</div>
                       <div value="relaxed">Relaxed</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
-                </div>
 
-                <div class="setting-group">
-                  <div class="searchType">Search Type</div>
-                  <div class="setting">
+                  <div class="setting-group">
+                    <div class="setting">
+                      <div class="searchType">Search Type</div>
+                      <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
                     <div class="select" id="searchType">
                       <div value="1">Standard</div>
                     </div>
-                    <ion-icon name="chevron-down-outline"></ion-icon>
                   </div>
                 </div>
               </div>

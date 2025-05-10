@@ -3,42 +3,56 @@ const cheerio = require('cheerio');
 
 const mapping = {
   departOrArrive: { departure: 0, arrival: 1, first: 2, last: 3 },
-  paymentType:    { ic: 1, ticket: 2 },
-  discountType:   {
+  paymentType: { ic: 1, ticket: 2 },
+  discountType: {
     none: 0, zipangu: 2, zipangu_first: 1,
     otona_zipangu: 3, otona_middle: 4, otona_west: 5, shikoku_zipangu: 6
   },
-  commuteType:    {
+  commuteType: {
     commute: 1, offpeak_commute: 5, university: 2,
     highschool: 3, junior: 4
   },
-  airplaneUse:    { allow: 0, forbid: 1 },
-  busUse:         { allow: 0, forbid: 1 },
-  expressTrainUse:{ allow: 0, prefer: 3, avoid: 4, forbid: 1 },
+  airplaneUse: { allow: 0, forbid: 1 },
+  busUse: { allow: 0, forbid: 1 },
+  expressTrainUse: { allow: 0, prefer: 3, avoid: 4, forbid: 1 },
   seatPreference: { any: 5, reserved: 0, free: 1, green: 2 },
   preferredTrain: { nozomi: 0, hikari: 1, local: 2 },
-  transferTime:   { short: 1, normal: 2, relaxed: 3 },
-  sort:           { recommend: 'rec', arrival: 'time', duration: 'fast', transfer: 'change', price: 'cheap' }
+  transferTime: { short: 1, normal: 2, relaxed: 3 },
+  sort: { recommend: 'rec', arrival: 'time', duration: 'fast', transfer: 'change', price: 'cheap' }
 };
 
 const mapParam = (key, value) =>
   mapping[key] && mapping[key][value] !== undefined ? mapping[key][value] : value;
 
 async function suggestName(raw) {
+  const url = `https://navi.jorudan.co.jp/api/compat/suggest/agg?lang=ja&limit=5&q=${encodeURIComponent(raw)}`;
   try {
-    const url = `https://navi.jorudan.co.jp/api/compat/suggest/agg?lang=ja&limit=1&q=${encodeURIComponent(raw)}`;
-    const { data } = await axios.get(url);
-    if (data?.R?.length) return data.R[0].poiName;
+    const { data } = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'application/json',
+        'Referer': 'https://www.jorudan.co.jp/'
+      }
+    });
+    const list = data.R || [];
+    if (list.length === 0) {
+      // console.log('[SUGGEST]', raw, '→', raw);
+      return raw;
+    }
+    const exact = list.find(item => item.poiName === raw);
+    const choice = exact || list[0];
+    // console.log('[SUGGEST]', raw, '→', choice.poiName);
+    return choice.poiName;
   } catch (err) {
-    console.warn('[SUGGEST]', raw, '→', err.message);
+    // console.warn('[SUGGEST]', raw, '→', err.message);
+    return raw;
   }
-  return raw;
 }
 
 async function scrapeJorudan(params) {
   let { from, to, year, month, day, hour, minute } = params;
   from = await suggestName(from);
-  to   = await suggestName(to);
+  to = await suggestName(to);
 
   const minuteStr = minute.toString().padStart(2, '0');
   const baseParams = { ...params, from, to };
@@ -105,7 +119,7 @@ async function scrapeJorudan(params) {
     if (rawDay.length) {
       rawDay.children('div').remove();
       const txt = rawDay.text().trim();
-      const m   = txt.match(/(\d{4}\/\d{2}\/\d{2})/);
+      const m = txt.match(/(\d{4}\/\d{2}\/\d{2})/);
       dateText = m?.[1] || '';
     }
     if (!dateText) {
@@ -114,14 +128,14 @@ async function scrapeJorudan(params) {
         dateText = `${ymd.first().text().trim()} → ${ymd.last().text().trim()}`;
       }
     }
-    const timeBs        = block.find('.data_line_1 .data_tm b').not('.ymd');
+    const timeBs = block.find('.data_line_1 .data_tm b').not('.ymd');
     const departureTime = timeBs.first().text().trim();
-    const arrivalTime   = timeBs.last().text().trim();
+    const arrivalTime = timeBs.last().text().trim();
 
-    const price        = block.find('.data_line_1 .data_total dd b').text().trim();
-    const duration     = block.find('.data_total-time dd b').text().trim();
-    const transfers    = block.find('.data_norikae-num dd b').text().trim();
-    const co2Emission  = block.find('.data_norikae-eco dd b').first().text().trim();
+    const price = block.find('.data_line_1 .data_total dd b').first().text().trim();
+    const duration = block.find('.data_total-time dd b').text().trim();
+    const transfers = block.find('.data_norikae-num dd b').text().trim();
+    const co2Emission = block.find('.data_norikae-eco dd b').first().text().trim();
     const co2Reduction = block.find('.data_norikae-eco dd b').eq(1).text().trim();
 
     const stations = [];
@@ -133,8 +147,8 @@ async function scrapeJorudan(params) {
       const htmlCell = td.html() || '';
       stations.push({
         stationName: name,
-        timeLink:    $r.find('a.time').attr('href') || '',
-        nonStop:     htmlCell.includes('≪降車不要≫')
+        timeLink: $r.find('a.time').attr('href') || '',
+        nonStop: htmlCell.includes('≪降車不要≫')
       });
     });
 
@@ -146,17 +160,17 @@ async function scrapeJorudan(params) {
       const [depSeg = '', arrSeg = ''] = depArr.split('-').map(s => s.trim());
       const $stripe = $r.find('td.ln .line_border_stripe');
       const $border = $stripe.length ? $stripe : $r.find('td.ln .line_border');
-      const style  = $border.attr('style') || '';
+      const style = $border.attr('style') || '';
       const colorMatch = style.match(/background-color:([^;]+);/);
-      const color  = colorMatch?.[1] || '';
-      const striped= $stripe.length > 0;
-      const $link  = $r.find('td.rn div a');
+      const color = colorMatch?.[1] || '';
+      const striped = $stripe.length > 0;
+      const $link = $r.find('td.rn div a');
       const trainName = $link.text().trim().replace(/\n/g, ' ');
-      const timeLink  = $link.attr('href') || '';
-      const fare      = $r.find('td.fr').text().trim();
-      const distance  = $r.find('td.km').text().trim();
-      const altImg   = $r.find('td.gf img').attr('alt');
-      const trainType= altImg || '普通';
+      const timeLink = $link.attr('href') || '';
+      const fare = $r.find('td.fr').text().trim();
+      const distance = $r.find('td.km').text().trim();
+      const altImg = $r.find('td.gf img').attr('alt');
+      const trainType = altImg || '普通';
       segments.push({ departure: depSeg, arrival: arrSeg, duration: legDur, line: trainName, color, striped, timeLink, fare, distance, trainType });
     });
 
@@ -167,12 +181,12 @@ async function scrapeJorudan(params) {
       const parts = ($r.find('td.tm').html() || '').split('<br>').map(s => s.replace(/<[^>]+>/g, '').trim());
       let transferTime = '', waitTime = '';
       if (parts[0]) { const m = parts[0].match(/乗換(\d+分)/); transferTime = m?.[1] || ''; }
-      if (parts[1]) { const m = parts[1].match(/待ち(\d+分)/);   waitTime    = m?.[1] || ''; }
+      if (parts[1]) { const m = parts[1].match(/待ち(\d+分)/); waitTime = m?.[1] || ''; }
       changes.push({
-        stationName:       $r.find('td.nm a').text().trim(),
+        stationName: $r.find('td.nm a').text().trim(),
         transferTime,
         waitTime,
-        arrivalPlatform:   $r.find('td.ph div').first().text().trim(),
+        arrivalPlatform: $r.find('td.ph div').first().text().trim(),
         departurePlatform: $r.find('td.ph div').eq(1).text().trim()
       });
     });

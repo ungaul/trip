@@ -2,27 +2,24 @@ input[type="number"] {
     display: none;
 }
 
-/* .segments{
-    display: none;
-} */
+footer {
+    display: none !important;
+}
 
-/* width */
 ::-webkit-scrollbar {
     width: var(--scrollbar-width);
     height: 8px;
     background: transparent;
 }
 
-/* Handle */
 ::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
+    background: var(--secondary-color);
     border-radius: 10px;
     cursor: pointer;
 }
 
-/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
+    background: var(--primary-color);
 }
 
 ::-webkit-scrollbar-corner {
@@ -33,18 +30,9 @@ input[type='datetime-local']::-webkit-calendar-picker-indicator {
     display: none;
 }
 
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px var(--thirdary-color) inset !important;
-}
-
 
 input:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 30px var(--secondary-color) inset !important;
-}
-
-input:-webkit-autofill {
     -webkit-text-fill-color: var(--background-color) !important;
 }
 
@@ -109,16 +97,11 @@ span {
 
 h1 {
     font-size: 1rem;
+    line-height: 33px;
 }
 
 ion-icon {
     color: var(--background-color);
-}
-
-.arrows {
-    fill: var(--background-color);
-    width: 20px;
-    display: none;
 }
 
 button:hover {
@@ -162,7 +145,7 @@ li {
     gap: 25px;
     background: var(--primary-color);
     padding: 10px;
-    padding-bottom: 20px;
+    padding-bottom: calc(20px + 33px);
 }
 
 #app header {
@@ -258,23 +241,37 @@ header img {
 #settings-content {
     display: flex;
     gap: 5px;
-    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-between;
+}
+
+#settings-list {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    max-width: 81.5vw;
+    justify-content: space-between;
+    overflow: scroll;
+}
+
+#settings-list::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .select {
-    opacity: 0;
-    z-index: -1;
     flex-direction: column;
     justify-content: center;
-    position: absolute;
-    border-radius: 10px;
-    box-sizing: border-box;
     display: flex;
+    border-radius: 10px;
     overflow: hidden;
+    min-width: 100%;
+    opacity: 0;
+    z-index: -1;
 }
 
 .select div {
-    padding: 8px 12px;
+    padding: 10px 15px;
     cursor: pointer;
     background: var(--secondary-color);
 }
@@ -285,46 +282,19 @@ header img {
 
 .setting-group.open .select {
     opacity: 100;
-    z-index: 1;
+    z-index: 2;
 }
 
-.more-settings {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    padding: 10px;
-    border-radius: 10px;
+.setting-group.open {
+    z-index: 2;
 }
 
-.more-settings:hover {
+div[selected] {
     background: var(--secondary-color);
-    cursor: pointer;
 }
 
 .setting-group.open ion-icon {
     transform: rotate(90deg);
-}
-
-.setting-group:hover {
-    background: var(--thirdary-color);
-    cursor: pointer;
-}
-
-#settings.expanded #settings-content {
-    gap: 5px;
-}
-
-#settings.expanded .select div {
-    width: calc(50% - 5px) !important;
-}
-
-#settings.expanded .select {
-    border: 1px solid var(--text-color);
-}
-
-#settings.expanded .setting-group {
-    width: calc(50% - 5px) !important;
 }
 
 #settings * {
@@ -333,8 +303,11 @@ header img {
 
 #items {
     display: flex;
-    align-items: center;
     gap: 2px;
+    position: relative;
+    height: 100%;
+    min-height: fit-content;
+    overflow: hidden;
 }
 
 .more {
@@ -368,14 +341,32 @@ header img {
     font-size: 20px;
 }
 
+#items .item-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    min-height: fit-content;
+    padding: 12px 25px;
+    /* top: 5px; */
+    background: var(--secondary-color);
+}
+
+.item-contents {
+    display: flex;
+    align-items: center;
+}
+
 .item {
     display: flex;
     align-items: center;
     gap: 5px;
     position: relative;
     width: 15vw;
-    max-width: 245px;
-    height: 37px;
+    max-width: 180px;
 }
 
 input[type="text"] {
@@ -391,9 +382,9 @@ input[type="text"] {
     display: flex;
     gap: 15px;
     padding: 20px;
-    min-height: calc(100vh - 225px - 33px);
     overflow-y: scroll;
     overflow-x: hidden;
+    z-index: 1;
 }
 
 #trips {
@@ -470,10 +461,6 @@ span.stop-dot {
     flex-direction: column;
 }
 
-.timeline.active {
-    display: flex;
-}
-
 .stop-label {
     display: flex;
     gap: 5px;
@@ -491,8 +478,38 @@ span.stop-dot {
     width: 70px;
 }
 
+.stay-duration {
+    z-index: 2;
+    display: flex;
+    min-width: 100%;
+}
+
+.destination-setting {
+    display: flex;
+    width: 100%;
+    gap: 5px;
+}
+
+.destination-setting div {
+    width: 25%;
+    color: var(--background-color);
+    display: flex;
+    justify-content: center;
+    padding: 7px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.destination-setting div:hover {
+    background: var(--thirdary-color);
+}
+
+.selected {
+    background: var(--thirdary-color);
+}
+
 .leg {
-    width: 40%;
+    width: 60%;
     min-width: 50vw;
     max-width: 1200px;
     display: flex;
@@ -511,19 +528,20 @@ span.stop-dot {
     width: 100%;
 }
 
+.trip.active .timeline {
+    display: flex;
+}
+
 .info {
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
-#departure,
-#arrival,
-.departure,
-.arrival {
+.info div{
     display: flex;
-    gap: 5px;
     align-items: center;
+    gap: 5px;
 }
 
 .date {
@@ -571,6 +589,12 @@ span.stop-dot {
     height: 60px;
 }
 
+.segment {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
 .segTiming {
     display: flex;
     flex-direction: column;
@@ -608,8 +632,9 @@ span.stop-dot {
     column-gap: 15vw;
     row-gap: 15px;
     justify-content: center;
-    padding: 0 20px;
     align-items: center;
+    padding: 0 20px;
+    min-height: 40px;
     width: 100%;
 }
 
@@ -629,9 +654,10 @@ span.stop-dot {
 #dates {
     display: flex;
     gap: 2px;
+    height: 100%;
 }
 
-.duration span {
+/* .duration span {
     color: #1a3bc0;
 }
 
@@ -649,7 +675,7 @@ span.stop-dot {
 
 .price span {
     color: #dac318;
-}
+} */
 
 #departure {
     border-radius: 10px 0 0 10px !important;
@@ -659,15 +685,20 @@ span.stop-dot {
     border-radius: 0 10px 10px 0 !important;
 }
 
-#departure,
-#arrival,
-.item {
+#departure {
     background: var(--secondary-color);
     padding: 10px 15px;
     display: flex;
-    gap: 5px;
+    gap: 10px;
     align-items: center;
-    border-radius: 10px;
+}
+
+#arrival {
+    background: var(--secondary-color);
+    padding: 10px 15px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 .item:not(:first-child) {
@@ -675,12 +706,13 @@ span.stop-dot {
     border-radius: 0;
 }
 
-.item:first-child {
+.item-container:first-child {
     border-radius: 10px 0 0 10px;
 }
 
-.item:last-child {
+.item-container:last-child {
     border-radius: 0 10px 10px 0;
+    padding-left: 25px !important;
 }
 
 #submit {
@@ -689,31 +721,39 @@ span.stop-dot {
 
 #searchForm {
     display: flex;
-    align-items: center;
     gap: 10px;
     width: 90%;
+    position: absolute;
 }
 
 .setting-group {
     display: flex;
+    flex-direction: column;
     gap: 10px;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--secondary-color);
-    padding: 10px 15px;
-    border-radius: 10px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    position: relative;
+    z-index: 0;
 }
 
-.item:hover,
-#dates div:hover {
-    cursor: pointer;
-    background: var(--thirdary-color);
+.setting-group * {
+    white-space: nowrap;
 }
 
 .setting {
     display: flex;
-    gap: 3px;
+    gap: 5px;
     align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: var(--secondary-color);
+    border-radius: 10px;
+    width: 100%;
+}
+
+.setting:hover {
+    background: var(--thirdary-color);
+    cursor: pointer;
 }
 
 .close {
@@ -721,6 +761,7 @@ span.stop-dot {
     align-items: center;
     justify-content: center;
     font-size: 20px;
+    cursor: pointer;
 }
 
 footer {
@@ -731,6 +772,7 @@ footer {
     justify-content: center;
     align-items: center;
     z-index: 1;
+    height: 75px;
     /* position: sticky;
     bottom: 0; */
 }
@@ -744,8 +786,6 @@ footer ion-icon {
 footer ion-icon:hover {
     background: var(--secondary-color);
 }
-
-.dropdown {}
 
 .flatpickr-calendar,
 .flatpickr-months .flatpickr-month,
@@ -953,8 +993,15 @@ span.flatpickr-weekday {
     #arrival {
         border-radius: 10px !important;
     }
+}
 
-    #trips {
-        min-height: calc(100vh - 225px - 72px) !important;
+
+@media screen and (max-width: 600px) {
+
+    nav,
+    header {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
 }

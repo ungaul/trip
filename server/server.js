@@ -9,13 +9,38 @@ const PORT = 3000;
 
 app.get('/scrape', async (req, res) => {
   console.log(`[SCRAPE] Incoming: ${req.method} ${req.originalUrl}`);
-  console.log('[SCRAPE] Query params:', req.query);
-  const { from, to, year, month, day, hour, minute } = req.query;
-  if (!from || !to || !year || !month || !day || !hour || !minute) {
-    return res.status(400).send('Erreur: paramètres manquants');
+  const raw = req.query;
+  const params = {
+    year:            raw.year,
+    month:           raw.month,
+    day:             raw.day,
+    hour:            raw.hour,
+    minute:          raw.minute,
+    departOrArrive:  raw.departOrArrive  || 'departure',
+    paymentType:     raw.paymentType     || 'ic',
+    discountType:    raw.discountType    || 'none',
+    commuteType:     raw.commuteType     || 'commute',
+    airplaneUse:     raw.airplaneUse     || 'forbid',
+    busUse:          raw.busUse          || 'forbid',
+    expressTrainUse: raw.expressTrainUse || 'allow',
+    allowCarTaxi:    raw.allowCarTaxi    || 'true',
+    allowBike:       raw.allowBike       || 'true',
+    sort:            raw.sort            || 'recommend',
+    seatPreference:  raw.seatPreference  || 'any',
+    preferredTrain:  raw.preferredTrain  || 'nozomi',
+    transferTime:    raw.transferTime    || 'normal',
+    searchType:      raw.searchType      || '1',
+    from:            raw.from,
+    to:              raw.to,
+    departure:       raw.departure
+  };
+  // console.log('[SCRAPE] Query params:', params);
+  if (!params.from || !params.to || !params.year || !params.month || !params.day || !params.hour || !params.minute) {
+    res.status(400).send('Erreur: paramètres manquants');
+    return;
   }
   try {
-    const results = await scrapeJorudan(req.query);
+    const results = await scrapeJorudan(params);
     res.json({ results });
   } catch (error) {
     console.error(`[SCRAPE] Error: ${error.message}`);
@@ -26,15 +51,15 @@ app.get('/scrape', async (req, res) => {
 app.get('/suggest', async (req, res) => {
   const q = String(req.query.q || '').trim();
   if (!q) {
-    return res.status(400).json({ error: 'Missing q parameter' });
+    res.status(400).json({ error: 'Missing q parameter' });
+    return;
   }
   try {
-    const url = `https://navi.jorudan.co.jp/api/compat/suggest/agg`
-              + `?lang=ja&limit=1&q=${encodeURIComponent(q)}`;
+    const url = `https://navi.jorudan.co.jp/api/compat/suggest/agg?lang=ja&limit=1&q=${encodeURIComponent(q)}`;
     const { data } = await axios.get(url);
     res.json(data);
   } catch (err) {
-    console.error('[SUGGEST_PROXY] ', err.message);
+    console.error('[SUGGEST_PROXY]', err.message);
     res.status(500).json({ error: err.message });
   }
 });
