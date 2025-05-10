@@ -1,6 +1,6 @@
 const express = require('express');
-const cors    = require('cors');
-const axios   = require('axios');
+const cors = require('cors');
+const axios = require('axios');
 const scrapeJorudan = require('./services/jorudan');
 
 const app = express();
@@ -8,31 +8,31 @@ app.use(cors());
 const PORT = 3000;
 
 app.get('/scrape', async (req, res) => {
-  console.log(`[SCRAPE] Incoming: ${req.method} ${req.originalUrl}`);
+  console.log(`[SCRAPE] Incoming: ${req.protocol}://${req.headers.host}${req.originalUrl}`);
   const raw = req.query;
   const params = {
-    year:            raw.year,
-    month:           raw.month,
-    day:             raw.day,
-    hour:            raw.hour,
-    minute:          raw.minute,
-    departOrArrive:  raw.departOrArrive  || 'departure',
-    paymentType:     raw.paymentType     || 'ic',
-    discountType:    raw.discountType    || 'none',
-    commuteType:     raw.commuteType     || 'commute',
-    airplaneUse:     raw.airplaneUse     || 'forbid',
-    busUse:          raw.busUse          || 'forbid',
+    year: raw.year,
+    month: raw.month,
+    day: raw.day,
+    hour: raw.hour,
+    minute: raw.minute,
+    departOrArrive: raw.departOrArrive || 'departure',
+    paymentType: raw.paymentType || 'ic',
+    discountType: raw.discountType || 'none',
+    commuteType: raw.commuteType || 'commute',
+    airplaneUse: raw.airplaneUse || 'forbid',
+    busUse: raw.busUse || 'forbid',
     expressTrainUse: raw.expressTrainUse || 'allow',
-    allowCarTaxi:    raw.allowCarTaxi    || 'true',
-    allowBike:       raw.allowBike       || 'true',
-    sort:            raw.sort            || 'recommend',
-    seatPreference:  raw.seatPreference  || 'any',
-    preferredTrain:  raw.preferredTrain  || 'nozomi',
-    transferTime:    raw.transferTime    || 'normal',
-    searchType:      raw.searchType      || '1',
-    from:            raw.from,
-    to:              raw.to,
-    departure:       raw.departure
+    allowCarTaxi: raw.allowCarTaxi || 'true',
+    allowBike: raw.allowBike || 'true',
+    sort: raw.sort || 'recommend',
+    seatPreference: raw.seatPreference || 'any',
+    preferredTrain: raw.preferredTrain || 'nozomi',
+    transferTime: raw.transferTime || 'normal',
+    searchType: raw.searchType || '1',
+    from: raw.from,
+    to: raw.to,
+    departure: raw.departure
   };
   // console.log('[SCRAPE] Query params:', params);
   if (!params.from || !params.to || !params.year || !params.month || !params.day || !params.hour || !params.minute) {

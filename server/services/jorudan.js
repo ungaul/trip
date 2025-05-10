@@ -168,10 +168,12 @@ async function scrapeJorudan(params) {
       const trainName = $link.text().trim().replace(/\n/g, ' ');
       const timeLink = $link.attr('href') || '';
       const fare = $r.find('td.fr').text().trim();
+      const seatFare = $r.find('td.st').text().trim().replace(/\s+/g, '') || null;
       const distance = $r.find('td.km').text().trim();
       const altImg = $r.find('td.gf img').attr('alt');
       const trainType = altImg || '普通';
-      segments.push({ departure: depSeg, arrival: arrSeg, duration: legDur, line: trainName, color, striped, timeLink, fare, distance, trainType });
+
+      segments.push({ departure: depSeg, arrival: arrSeg, duration: legDur, line: trainName, color, striped, timeLink, fare, seatFare, distance, trainType });
     });
 
     const changes = [];

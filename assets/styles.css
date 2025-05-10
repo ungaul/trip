@@ -1,10 +1,16 @@
-input[type="number"] {
-    display: none;
-}
+/* Disabled Features */
 
-footer {
+footer,
+#arrival,
+input[type="number"] {
     display: none !important;
 }
+
+#departure{
+    border-radius: 10px !important;
+}
+
+/* Common */
 
 ::-webkit-scrollbar {
     width: var(--scrollbar-width);
@@ -249,7 +255,7 @@ header img {
     display: flex;
     gap: 5px;
     width: 100%;
-    max-width: 81.5vw;
+    max-width: 84vw;
     justify-content: space-between;
     overflow: scroll;
 }
@@ -262,12 +268,10 @@ header img {
 .select {
     flex-direction: column;
     justify-content: center;
-    display: flex;
+    display: none;
     border-radius: 10px;
     overflow: hidden;
     min-width: 100%;
-    opacity: 0;
-    z-index: -1;
 }
 
 .select div {
@@ -281,8 +285,7 @@ header img {
 }
 
 .setting-group.open .select {
-    opacity: 100;
-    z-index: 2;
+    display: flex;
 }
 
 .setting-group.open {
@@ -380,10 +383,10 @@ input[type="text"] {
 
 #content {
     display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 15px;
     padding: 20px;
-    overflow-y: scroll;
-    overflow-x: hidden;
     z-index: 1;
 }
 
@@ -393,8 +396,9 @@ input[type="text"] {
     align-items: center;
     gap: 15px;
     height: fit-content;
-    /* min-height: calc(100vh - 186px - 72px); */
-    width: 100%;
+    width: 60%;
+    min-width: 50vw;
+    max-width: 1200px;
 }
 
 #panel {
@@ -467,7 +471,7 @@ span.stop-dot {
     align-items: center;
     margin-left: 15px;
     font-size: 17px;
-    width: 250px;
+    width: 245px;
 }
 
 .seg-fare {
@@ -475,7 +479,7 @@ span.stop-dot {
 }
 
 .seg-distance {
-    width: 70px;
+    width: 80px;
 }
 
 .stay-duration {
@@ -509,14 +513,13 @@ span.stop-dot {
 }
 
 .leg {
-    width: 60%;
-    min-width: 50vw;
-    max-width: 1200px;
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 
-.trip {
+.trip,
+#summary {
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -526,6 +529,22 @@ span.stop-dot {
     padding: 15px 20px;
     cursor: pointer;
     width: 100%;
+}
+
+#summary {
+    width: 60%;
+    min-width: 50vw;
+    max-width: 1200px;
+    flex-direction: row;
+    opacity: 0;
+}
+
+#summary.active {
+    opacity: 100;
+}
+
+.summary-item.header {
+    font-weight: 600;
 }
 
 .trip.active .timeline {
@@ -538,7 +557,7 @@ span.stop-dot {
     gap: 5px;
 }
 
-.info div{
+.info div {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -629,13 +648,19 @@ span.stop-dot {
 
 #main {
     display: flex;
-    column-gap: 15vw;
+    column-gap: 27vw;
     row-gap: 15px;
     justify-content: center;
     align-items: center;
     padding: 0 20px;
     min-height: 40px;
     width: 100%;
+}
+
+.platforms {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .trip-list {
@@ -677,12 +702,12 @@ span.stop-dot {
     color: #dac318;
 } */
 
-#departure {
-    border-radius: 10px 0 0 10px !important;
+#dates #departure {
+    border-radius: 10px 0 0 10px;
 }
 
-#arrival {
-    border-radius: 0 10px 10px 0 !important;
+#dates #arrival {
+    border-radius: 0 10px 10px 0;
 }
 
 #departure {
@@ -955,17 +980,40 @@ span.flatpickr-weekday {
 }
 
 @media screen and (max-width: 1279px) {
-    .leg {
-        width: 100% !important;
+
+    .segTiming,
+    .stop-change {
+        display: none !important;
+    }
+
+    .stop:first-child,
+    .stop:last-child {
+        margin: 0 !important;
+    }
+
+    .bottom {
+        flex-wrap: wrap;
     }
 
     #items {
         flex-direction: column !important;
-        width: 100% !important;
+    }
+
+    #items .item-container {
+        height: fit-content;
+    }
+
+    .item-container,
+    .item-container {
+        border-radius: 10px !important;
     }
 
     #app.vertical #main {
         flex-direction: row !important;
+    }
+
+    #dates {
+        justify-content: center;
     }
 
     #main {
@@ -980,7 +1028,7 @@ span.flatpickr-weekday {
 
     .more {
         right: calc(50% - 15px) !important;
-        top: calc(50% + 3px) !important;
+        top: calc(100% - 15px) !important;
     }
 }
 
@@ -993,15 +1041,8 @@ span.flatpickr-weekday {
     #arrival {
         border-radius: 10px !important;
     }
-}
 
-
-@media screen and (max-width: 600px) {
-
-    nav,
-    header {
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+    #app header p {
+        display: none;
     }
 }
