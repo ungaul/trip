@@ -1,12 +1,11 @@
 /* Disabled Features */
 
 footer,
-#arrival,
-input[type="number"] {
+#arrival {
     display: none !important;
 }
 
-#departure{
+#departure {
     border-radius: 10px !important;
 }
 
@@ -816,7 +815,7 @@ footer ion-icon:hover {
 .flatpickr-months .flatpickr-month,
 .flatpickr-current-month .flatpickr-monthDropdown-months,
 span.flatpickr-weekday {
-    background: var(--primary-color) !important;
+    background: var(--secondary-color) !important;
 }
 
 .flatpickr-current-month input.cur-year {
@@ -875,7 +874,7 @@ span.flatpickr-weekday {
 
 .lds-spinner {
     /* change color here */
-    color: #1c4c5b
+    color: #1c4c5b;
 }
 
 .lds-spinner,

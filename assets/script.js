@@ -49,38 +49,64 @@ $(document).ready(function () {
   }
   const params = new URLSearchParams(window.location.search);
   function prefill() {
-    const from = params.get('from') || '',
-      bys = params.getAll('by'),
-      byTimes = params.getAll('byTime'),
-      to = params.get('to') || '';
+    const from = params.get('from') || '';
+    const bys = params.getAll('by');
+    const byTimes = params.getAll('byTime');
+    const to = params.get('to') || '';
+
     $('#items').empty();
+
     $('#items').append(createItemContainer('From', from));
+
     bys.forEach((b, index) => {
-      $('#items').append(createItemContainer('By', b));
+      const byItem = $(createItemContainer('By', b));
+      $('#items').append(byItem);
       const byTime = byTimes[index] || '6';
-      const $lastItem = $('#items .item-container').last();
-      $lastItem.append(`
-        <div class="stay-duration">
-          <div class="destination-setting">
-            <div value="3" ${byTime === '3' ? 'class="selected"' : ''}>3h</div>
-            <div value="6" ${byTime === '6' ? 'class="selected"' : ''}>6h</div>
-            <div value="12" ${byTime === '12' ? 'class="selected"' : ''}>12h</div>
-            <div value="24" ${byTime === '24' ? 'class="selected"' : ''}>24h</div>
-          </div>
+      byItem.append(`
+      <div class="stay-duration">
+        <div class="destination-setting">
+          <div value="3" ${byTime === '3' ? 'class="selected"' : ''}>3h</div>
+          <div value="6" ${byTime === '6' ? 'class="selected"' : ''}>6h</div>
+          <div value="12" ${byTime === '12' ? 'class="selected"' : ''}>12h</div>
+          <div value="24" ${byTime === '24' ? 'class="selected"' : ''}>24h</div>
         </div>
-      `);
+      </div>
+    `);
     });
-    $('#items').append(createItemContainer('To', to));
-    let depVal = params.get('departure');
-    if (depVal && depVal.includes('_') && depVal.includes('-')) {
-      depVal = depVal.replace('_', 'T').replace('-', ':');
+
+    if (bys.length === 0) {
+      const emptyBy = $(createItemContainer('By'));
+      $('#items').append(emptyBy);
+      emptyBy.find('.close').remove();
     }
+    const toItem = $(createItemContainer('To', to));
+    $('#items').append(toItem);
+
+    if (!to) {
+      navigator.geolocation.getCurrentPosition(async pos => {
+        const name = await findNearestStation(pos.coords.latitude, pos.coords.longitude);
+        if (name) {
+          $('#items .item-container').last().find('input[name="Location"]').val(name);
+        }
+      });
+    }
+
+    let depVal = params.get('departure');
+    if (depVal && depVal.includes('_')) {
+      const parts = depVal.split('_');
+      if (parts.length === 2) {
+        depVal = parts[0] + 'T' + parts[1].replace('-', ':');
+      }
+    }
+
     if (!depVal && params.has('year') && params.has('hour')) {
       depVal =
         `${params.get('year').padStart(4, '0')}-${params.get('month').padStart(2, '0')}-${params.get('day').padStart(2, '0')}` +
         `T${params.get('hour').padStart(2, '0')}:${params.get('minute').padStart(2, '0')}`;
     }
+
     $('input[name="Departure"]').val(depVal || toLocalInput(new Date()));
+
     if (params.has('return')) {
       let retVal = params.get('return');
       if (retVal && retVal.includes('_') && retVal.includes('-')) {
@@ -88,6 +114,7 @@ $(document).ready(function () {
       }
       $('input[name="Return"]').val(retVal);
     }
+
     [
       'departOrArrive', 'paymentType', 'discountType', 'commuteType',
       'airplaneUse', 'busUse', 'expressTrainUse',
@@ -102,10 +129,19 @@ $(document).ready(function () {
         $sel.find(`div[value="${val}"]`).addClass('selected');
       }
     });
+
     if ($('#items .item-container').length > 2) {
       $('#app').addClass('vertical');
     }
+
+    const inputs = $('#items .item input[name="Location"]');
+    const required = [inputs.eq(0), inputs.eq(1), inputs.eq(inputs.length - 1)];
+    const missing = required.some($el => !$el.val().trim());
+    if (params.has('from') && (params.has('to') || params.has('by'))) {
+      setTimeout(() => triggerSearch(false), 100);
+    }
   }
+
   prefill();
   const maxStops = 4;
   function refreshMoreIcons() {
@@ -118,11 +154,16 @@ $(document).ready(function () {
     });
   }
   function refreshCloses() {
-    const len = $('#items .item-container').length;
-    $('#items .item-container').each(function (i) {
+    const $items = $('#items .item-container');
+    const count = $items.length;
+
+    $items.each(function (i) {
       const $ct = $(this);
       $ct.find('.close').remove();
-      if (i > 0 && i < len - 1) {
+
+      const isBy = i > 0 && i < count - 1;
+      const isFirstBy = i === 1;
+      if (isBy && !isFirstBy) {
         $ct.find('.item-contents').append('<ion-icon class="close" name="close-outline"></ion-icon>');
       }
     });
@@ -177,11 +218,9 @@ $(document).ready(function () {
 
       $stop.append($('<span>').addClass('stop-dot'));
 
-      // Create stop label container
       const $stopLabel = $('<div>').addClass('stop-label').text(name || '');
       $stop.append($stopLabel);
 
-      // Add platforms container if we have platform info
       if (arrivalPlatform || departurePlatform) {
         const $platforms = $('<div>').addClass('platforms');
 
@@ -290,16 +329,21 @@ $(document).ready(function () {
     $ct.find('.trip').first().addClass('active').find('.moreInfo').addClass('active');
   }
   async function triggerSearch(updateURL = true) {
-    const raw = $('#items .item input[name="Location"]').map((i, el) => $(el).val().trim()).get();
-    if (raw.length < 2) {
+    const allItems = $('#items .item input[name="Location"]');
+    const requiredItems = [allItems.eq(0), allItems.eq(1), allItems.eq(allItems.length - 1)];
+    const missing = requiredItems.some($el => !$el.val().trim());
+    if (missing) {
       $('#notification').addClass('active').html(`
-        <ion-icon name="alert-circle-outline"></ion-icon>
-        <p>出発地と到着地を2つ以上入力してください。</p>`);
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <p>出発地、中継地、到着地の3つすべてを入力してください。</p>`);
       return;
     }
+
     $('#notification').empty();
+    const raw = allItems.map((i, el) => $(el).val().trim()).get();
     const depVal = $('input[name="Departure"]').val(),
       retVal = $('input[name="Return"]').val();
+
     const filters = {};
     [
       'departOrArrive', 'paymentType', 'discountType', 'commuteType',
@@ -307,7 +351,10 @@ $(document).ready(function () {
       'allowCarTaxi', 'allowBike',
       'sort', 'seatPreference', 'preferredTrain',
       'transferTime', 'searchType'
-    ].forEach(k => { filters[k] = $(`#${k}`).attr('data-current') || ''; });
+    ].forEach(k => {
+      filters[k] = $(`#${k}`).attr('data-current') || '';
+    });
+
     const newP = new URLSearchParams();
     newP.set('from', raw[0]);
     raw.slice(1, -1).forEach((b, i) => {
@@ -321,15 +368,15 @@ $(document).ready(function () {
     if (retVal) {
       newP.set('return', retVal.replace('T', '_').replace(':', '-'));
     }
-    Object.entries(filters).forEach(([k, v]) => { newP.set(k, v); });
+    Object.entries(filters).forEach(([k, v]) => newP.set(k, v));
     if (updateURL) {
       window.history.replaceState(null, '', '?' + newP.toString());
     }
     $('#trips').empty().append(`
       <div id="loader" class="active">
         <div class="lds-spinner">${'<div></div>'.repeat(12)}</div>
-      </div>
-    `);
+      </div>`);
+    $('.leg').remove();
     let currentDeparture = new Date(depVal);
     async function fetchLeg(from, to, idx, stayH = 0) {
       const depStr = toLocalInput(currentDeparture);
@@ -348,20 +395,32 @@ $(document).ready(function () {
       $('#loader').before($grp.append($list));
       try {
         const data = await $.getJSON(url);
+        if (data.notification) {
+          $('#notification').addClass('active').html(`
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <p>${data.notification}</p>
+          `);
+        }
         renderTrips(data, $list);
         const first = Array.isArray(data.results) ? data.results[0] : data.results.results[0];
         const [arrH, arrM] = first.arrivalTime.split(':').map(Number);
         currentDeparture.setHours(arrH);
         currentDeparture.setMinutes(arrM + stayH * 60);
       } catch (err) {
-        $list.append($('<div>').addClass('error').text('Erreur chargement'));
+        $list.append($('<div>').addClass('error').text('データが無効です'));
       }
     }
+
     for (let i = 0; i < raw.length - 1; i++) {
       const $ct = $('#items .item-container').eq(i + 1);
       const stayH = parseInt($ct.find('.destination-setting .selected').attr('value'), 10) || 0;
-      await fetchLeg(raw[i], raw[i + 1], i, i < raw.length - 2 ? stayH : 0);
+
+      const isLastLeg = i === raw.length - 2;
+      if (!retVal || !isLastLeg) {
+        await fetchLeg(raw[i], raw[i + 1], i, stayH);
+      }
     }
+
     if (retVal) {
       await fetchLeg(raw[raw.length - 1], raw[0], raw.length - 1);
     }
@@ -398,16 +457,17 @@ $(document).ready(function () {
     const totalDistanceKm = totalDistance.toFixed(1) + 'km';
 
     const summaryHtml = `
-      <div class="summary-item header">まとめ</div>
-      <div class="summary-item">出発:${globalDeparture}</div>
-      <div class="summary-item">到着:${globalArrival}</div>
-      <div class="summary-item">距離:${totalDistanceKm}</div>
-      <div class="summary-item">合計料金:${totalFareYen} ${totalSeatFareYen}</div>
-    `;
+    <div class="summary-item header">まとめ</div>
+    <div class="summary-item">出発:${globalDeparture}</div>
+    <div class="summary-item">到着:${globalArrival}</div>
+    <div class="summary-item">距離:${totalDistanceKm}</div>
+    <div class="summary-item">合計料金:${totalFareYen} ${totalSeatFareYen}</div>
+  `;
 
     $('#summary').html(summaryHtml).addClass("active");
     $('#loader').removeClass('active');
   }
+
   $('#trips').off('click', '.trip').on('click', '.trip', function () {
     $(this).toggleClass('active');
     $(this).find('.moreInfo').toggleClass('active');
@@ -621,8 +681,5 @@ $(document).ready(function () {
         $fromField.val(name);
       }
     });
-  }
-  if (params.has('from') && (params.has('to') || params.has('by'))) {
-    triggerSearch(false);
   }
 });
