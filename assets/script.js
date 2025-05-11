@@ -435,7 +435,7 @@ $(document).ready(function () {
         hour: hour2, minute: minute2,
         ...filters
       };
-      const url = 'http://localhost:3000/scrape?' + $.param(paramsLeg);
+      const url = 'https://trip-iwev.onrender.com/scrape?' + $.param(paramsLeg);
       const $grp = $('<div>').addClass('leg'),
         $list = $('<div>').addClass('trip-list');
       $('#loader').before($grp.append($list));
