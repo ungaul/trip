@@ -418,11 +418,11 @@ $(document).ready(function () {
     if (updateURL) {
       window.history.replaceState(null, '', '?' + newP.toString());
     }
-    $('#trips').empty().append(`
+    $('#trips .leg, #loader').remove();
+    $('#trips').append(`
       <div id="loader" class="active">
         <div class="lds-spinner">${'<div></div>'.repeat(12)}</div>
       </div>`);
-    $('.leg').remove();
     let currentDeparture = new Date(depVal);
     async function fetchLeg(from, to, idx, stayH = 0) {
       const depStr = toLocalInput(currentDeparture);
