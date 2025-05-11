@@ -105,6 +105,7 @@ span {
 
 h1 {
     font-size: 1rem;
+    white-space: nowrap;
     line-height: 33px;
 }
 

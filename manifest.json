@@ -1,0 +1,17 @@
+{
+  "name": "ジョルダン旅",
+  "short_name": "Trip",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0c131f",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "assets/favicon.png",
+      "sizes": "28x28",
+      "type": "image/png"
+    }
+  ]
+}
