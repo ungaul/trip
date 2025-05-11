@@ -510,16 +510,19 @@ $(document).ready(function () {
     }
 
     for (let i = 0; i < raw.length - 1; i++) {
+      const from = raw[i], to = raw[i + 1];
+      if (from === to) continue;
+
       const $ct = $('#items .item-container').eq(i + 1);
       const stayH = parseInt($ct.find('.destination-setting .selected').attr('value'), 10) || 0;
 
       const isLastLeg = i === raw.length - 2;
       if (!retVal || !isLastLeg) {
-        await fetchLeg(raw[i], raw[i + 1], i, stayH);
+        await fetchLeg(from, to, i, stayH);
       }
     }
 
-    if (retVal) {
+    if (retVal && raw[raw.length - 1] !== raw[0]) {
       await fetchLeg(raw[raw.length - 1], raw[0], raw.length - 1);
     }
 
