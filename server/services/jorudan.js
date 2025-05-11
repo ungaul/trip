@@ -4,14 +4,6 @@ const cheerio = require('cheerio');
 const mapping = {
   departOrArrive: { departure: 0, arrival: 1, first: 2, last: 3 },
   paymentType: { ic: 1, ticket: 2 },
-  discountType: {
-    none: 0, zipangu: 2, zipangu_first: 1,
-    otona_zipangu: 3, otona_middle: 4, otona_west: 5, shikoku_zipangu: 6
-  },
-  commuteType: {
-    commute: 1, offpeak_commute: 5, university: 2,
-    highschool: 3, junior: 4
-  },
   airplaneUse: { allow: 0, forbid: 1 },
   busUse: { allow: 0, forbid: 1 },
   expressTrainUse: { allow: 0, prefer: 3, avoid: 4, forbid: 1 },
@@ -29,30 +21,58 @@ async function suggestName(raw) {
   try {
     const { data } = await axios.get(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'User-Agent': 'Mozilla/5.0',
         'Accept': 'application/json',
         'Referer': 'https://www.jorudan.co.jp/'
       }
     });
     const list = data.R || [];
     if (list.length === 0) {
-      // console.log('[SUGGEST]', raw, '→', raw);
-      return raw;
+      return { found: false, value: raw };
     }
     const exact = list.find(item => item.poiName === raw);
     const choice = exact || list[0];
-    // console.log('[SUGGEST]', raw, '→', choice.poiName);
-    return choice.poiName;
-  } catch (err) {
-    // console.warn('[SUGGEST]', raw, '→', err.message);
-    return raw;
+    return { found: true, value: choice.poiName };
+  } catch {
+    return { found: false, value: raw };
   }
 }
 
 async function scrapeJorudan(params) {
   let { from, to, year, month, day, hour, minute } = params;
-  from = await suggestName(from);
-  to = await suggestName(to);
+  const fromRes = await suggestName(from);
+  const toRes = await suggestName(to);
+
+  if (!fromRes.found || !toRes.found) {
+    return {
+      results: [],
+      notification: !fromRes.found
+        ? `station_not_found:${from}`
+        : `station_not_found:${to}`
+    };
+  }
+
+  if (!fromRes.found) {
+    return {
+      results: [],
+      notification: `station_not_found:${from}`
+    };
+  }
+  if (!toRes.found) {
+    return {
+      results: [],
+      notification: `station_not_found:${to}`
+    };
+  }
+  from = fromRes.value;
+  to = toRes.value;
+
+  let corrected = '';
+  if (fromRes.value !== params.from) corrected += `from:${params.from}→${fromRes.value}`;
+  if (toRes.value !== params.to) {
+    if (corrected) corrected += '|';
+    corrected += `to:${params.to}→${toRes.value}`;
+  }
 
   const minuteStr = minute.toString().padStart(2, '0');
   const baseParams = { ...params, from, to };
@@ -64,8 +84,6 @@ async function scrapeJorudan(params) {
     + `&Dhh=${p.hour}&Dmn1=${minuteStr[0]}&Dmn2=${minuteStr[1]}`
     + `&Cway=${mapParam('departOrArrive', p.departOrArrive || 'departure')}`
     + `&Cfp=${mapParam('paymentType', p.paymentType || 'ic')}`
-    + `&Czu=${mapParam('discountType', p.discountType || 'none')}`
-    + `&C7=${mapParam('commuteType', p.commuteType || 'commute')}`
     + `&C2=${mapParam('airplaneUse', p.airplaneUse || 'forbid')}`
     + `&C3=${mapParam('busUse', p.busUse || 'forbid')}`
     + `&C1=${mapParam('expressTrainUse', p.expressTrainUse || 'allow')}`
@@ -112,9 +130,13 @@ async function scrapeJorudan(params) {
   const $ = cheerio.load(html);
   const results = [];
 
+  const headerText = $('div.h_big2 h2').text();
+  const pageDateMatch = headerText.match(/(\d{4}\/\d{2}\/\d{2})/);
+  const pageDate = pageDateMatch ? pageDateMatch[1] : '';
+
   $('.bk_result').each((_, elem) => {
     const block = $(elem);
-    let dateText = '';
+    let dateText = pageDate;
     const rawDay = block.find('.data_line_1 .data_day');
     if (rawDay.length) {
       rawDay.children('div').remove();
@@ -127,6 +149,9 @@ async function scrapeJorudan(params) {
       if (ymd.length >= 2) {
         dateText = `${ymd.first().text().trim()} → ${ymd.last().text().trim()}`;
       }
+    }
+    if (!dateText && pageDate) {
+      dateText = pageDate;
     }
     const timeBs = block.find('.data_line_1 .data_tm b').not('.ymd');
     const departureTime = timeBs.first().text().trim();
@@ -195,7 +220,7 @@ async function scrapeJorudan(params) {
 
     results.push({
       route: block.find('.header .js_sortNum').text().trim(),
-      date: dateText,
+      date: dateText.replace(/^(\d{4})\/(\d{2})\/(\d{2})$/, '$2/$3'),
       departureTime,
       arrivalTime,
       price,
@@ -212,9 +237,10 @@ async function scrapeJorudan(params) {
     ? `no_result_with_${fallbackKey}_forbid`
     : undefined;
 
-  return notification
-    ? { results, notification }
-    : { results };
+  const output = { results };
+  if (notification) output.notification = notification;
+  if (corrected) output.correction = corrected;
+  return output;
 }
 
 module.exports = scrapeJorudan;

@@ -44,8 +44,11 @@ input:-webkit-autofill {
 body[theme="dark"] {
     --text-color: #ffffff;
     --background-color: #161616;
-    --background-alt-color: #434343;
+    --background-alt-color: #a0a0a0;
     --background-secondary-color: #222222;
+    --primary-color: #cad3e4;
+    --secondary-color: #b5c2d4;
+    --thirdary-color: #a9b1be;
 }
 
 body[theme="light"] {
@@ -53,6 +56,9 @@ body[theme="light"] {
     --background-color: #ffffff;
     --background-alt-color: #9da0a5;
     --background-secondary-color: #eeeeee;
+    --primary-color: #0c131f;
+    --secondary-color: #242b35;
+    --thirdary-color: #2b3442;
 }
 
 * {
@@ -73,9 +79,6 @@ body {
     margin: 0;
     width: 100vw;
     overflow-x: hidden;
-    --primary-color: #0c131f;
-    --secondary-color: #242b35;
-    --thirdary-color: #2b3442;
     --scrollbar-width: 10px;
 }
 
@@ -137,7 +140,7 @@ li {
     display: none;
 }
 
-#app.header {
+#app {
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -148,6 +151,7 @@ li {
     display: flex;
     flex-direction: column;
     gap: 25px;
+    height: 230px;
     background: var(--primary-color);
     padding: 10px;
     padding-bottom: calc(20px + 33px);
@@ -175,17 +179,20 @@ header img {
     color: var(--background-color);
 }
 
-#app.header #form {
+#app #form {
     display: flex;
     flex-direction: column;
     gap: 5px;
     width: 100%;
+    height: 100%;
+    justify-content: center;
 }
 
-#app.header #form-contents {
+#app #form-contents {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    align-items: center;
 }
 
 #notification {
@@ -205,6 +212,13 @@ header img {
     width: 250px;
 }
 
+.notifications{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
 #calendar {
     z-index: 2;
     display: flex;
@@ -221,7 +235,6 @@ header img {
 }
 
 #notification p {
-    width: calc(100% - 33px);
     line-height: 1.3;
     line-break: normal;
 }
@@ -229,6 +242,7 @@ header img {
 #notification ion-icon {
     font-size: 25px;
     color: var(--text-color);
+    width: 25px;
 }
 
 #settings {
@@ -259,7 +273,8 @@ header img {
     overflow: scroll;
 }
 
-#settings-list::-webkit-scrollbar {
+#settings-list::-webkit-scrollbar,
+#items::-webkit-scrollbar {
     width: 0;
     height: 0;
 }
@@ -307,9 +322,12 @@ div[selected] {
     display: flex;
     gap: 2px;
     position: relative;
+    width: 100%;
     height: 100%;
     min-height: fit-content;
-    overflow: hidden;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    border-radius: 10px;
 }
 
 .more {
@@ -343,7 +361,8 @@ div[selected] {
     font-size: 20px;
 }
 
-#items .item-container {
+#items .item-container,
+#search {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -357,9 +376,31 @@ div[selected] {
     background: var(--secondary-color);
 }
 
+#items .item-container:hover,
+#search:hover {
+    background: var(--thirdary-color);
+}
+
+#search {
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 50px;
+    justify-content: center;
+    align-items: center;
+    height: fit-content;
+    aspect-ratio: 1;
+    margin-left: 10px;
+    max-width: 90vw;
+}
+
+#search ion-icon {
+    font-size: 15px;
+}
+
 .item-contents {
     display: flex;
     align-items: center;
+    min-width: 185px;
 }
 
 .item {
@@ -371,11 +412,15 @@ div[selected] {
     max-width: 180px;
 }
 
+#form span {
+    white-space: nowrap;
+}
+
 input[type="text"] {
     width: 100%;
 }
 
-#app.header ion-icon[name="chevron-forward-outline"] {
+#app ion-icon[name="chevron-forward-outline"] {
     font-size: 20px;
     display: flex;
 }
@@ -647,13 +692,15 @@ span.stop-dot {
 
 #main {
     display: flex;
-    column-gap: 27vw;
-    row-gap: 15px;
-    justify-content: center;
+    gap: 15px;
+    justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
     min-height: 40px;
     width: 100%;
+}
+
+#main:not(.start) {
+    padding: 0 3vw;
 }
 
 .platforms {
@@ -675,10 +722,27 @@ span.stop-dot {
     flex-direction: column;
 }
 
+#app.start #formContainer {
+    height: 100%;
+    padding-bottom: 10px;
+}
+
+#app.start #content {
+    display: none;
+}
+
+#app:not(.start) #interstitial {
+    display: none;
+}
+
+#app.start #form {
+    align-items: center;
+}
+
 #dates {
     display: flex;
-    gap: 2px;
-    height: 100%;
+    gap: 10px;
+    height: fit-content;
 }
 
 /* .duration span {
@@ -736,11 +800,30 @@ span.stop-dot {
 
 .item-container:last-child {
     border-radius: 0 10px 10px 0;
-    padding-left: 25px !important;
 }
 
-#submit {
-    display: none;
+#interstitial {
+    background: var(--secondary-color);
+    width: calc(400px * 21 / 9);
+    /* max-width: 60%; */
+    height: 400px;
+    margin-top: 50px;
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 90vw;
+}
+
+#interstitial * {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+#photo {
+    background-image: url(../assets/img/shinkansen-landscape.jpg);
+    background-size: cover;
+    background-position: center;
 }
 
 #searchForm {
@@ -753,7 +836,7 @@ span.stop-dot {
 .setting-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
     align-items: flex-start;
     justify-content: flex-start;
     position: relative;
@@ -809,6 +892,11 @@ footer ion-icon {
 
 footer ion-icon:hover {
     background: var(--secondary-color);
+}
+
+.flatpickr-calendar {
+    border-radius: 10px !important;
+    overflow: hidden;
 }
 
 .flatpickr-calendar,
@@ -978,7 +1066,15 @@ span.flatpickr-weekday {
     }
 }
 
-@media screen and (max-width: 1279px) {
+@media screen and (max-width: 1150px) {
+    #formContainer {
+        padding-bottom: calc(20px + 33px);
+        height: 400px;
+    }
+
+    #main {
+        flex-direction: column;
+    }
 
     .segTiming,
     .stop-change {
@@ -994,12 +1090,13 @@ span.flatpickr-weekday {
         flex-wrap: wrap;
     }
 
-    #items {
-        flex-direction: column !important;
+    #items .item-container {
+        width: fit-content;
+        max-width: 100%;
     }
 
-    #items .item-container {
-        height: fit-content;
+    #settings-list {
+        width: 95%;
     }
 
     .item-container,
@@ -1013,10 +1110,15 @@ span.flatpickr-weekday {
 
     #dates {
         justify-content: center;
+        height: fit-content;
+        align-items: center;
     }
 
-    #main {
-        column-gap: 35px !important;
+    #search {
+        margin-left: unset;
+        height: 35px;
+        width: 100%;
+        min-height: unset !important;
     }
 
     .item {
@@ -1025,13 +1127,43 @@ span.flatpickr-weekday {
         max-width: unset !important;
     }
 
+    #trips, #summary{
+        width: 80%;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    #interstitial {
+        display: none;
+    }
+
+    #trips, #summary{
+        width: 100%;
+    }
+
     .more {
         right: calc(50% - 15px) !important;
         top: calc(100% - 15px) !important;
     }
-}
 
-@media screen and (max-width: 900px) {
+    #items .item-container {
+        height: fit-content !important;
+        width: 100% !important;
+    }
+
+    #items {
+        flex-direction: column !important;
+    }
+
+    #main {
+        flex-direction: row !important;
+    }
+
+    #app.start #form {
+        padding-top: 0;
+        padding-bottom: 50px;
+    }
+
     #dates {
         flex-direction: column;
     }

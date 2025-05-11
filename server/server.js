@@ -1,11 +1,20 @@
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const axios = require('axios');
 const scrapeJorudan = require('./services/jorudan');
 
 const app = express();
-app.use(cors());
 const PORT = 3000;
+
+app.use(cors());
+
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 30,
+  message: { error: 'Too many requests, please slow down.' }
+});
+app.use('/scrape', limiter);
 
 app.get('/scrape', async (req, res) => {
   console.log(`[SCRAPE] Incoming: ${req.protocol}://${req.headers.host}${req.originalUrl}`);
@@ -34,7 +43,7 @@ app.get('/scrape', async (req, res) => {
     to: raw.to,
     departure: raw.departure
   };
-  // console.log('[SCRAPE] Query params:', params);
+
   if (!params.from || !params.to || !params.year || !params.month || !params.day || !params.hour || !params.minute) {
     res.status(400).send('Erreur: paramètres manquants');
     return;

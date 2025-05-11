@@ -19,7 +19,7 @@
 </head>
 
 <body theme="light">
-  <div id="app" class="header">
+  <div id="app" class="start">
     <div id="formContainer" class="displayed">
       <header>
         <nav>
@@ -34,11 +34,11 @@
             <div id="items"></div>
             <div id="dates">
               <div id="departure">
-                <span>Departure: </span>
+                <span>出発日時: </span>
                 <input type="datetime-local" name="Departure" required>
               </div>
               <div id="arrival">
-                <span>Return: </span>
+                <span>到着日時: </span>
                 <input type="datetime-local" name="Return">
               </div>
             </div>
@@ -52,167 +52,137 @@
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="departOrArrive">Order</div>
+                      <div class="departOrArrive">並び順</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="departOrArrive">
-                      <div value="departure">Departure</div>
-                      <div value="arrival">Arrival</div>
-                      <div value="first">First Train</div>
-                      <div value="last">Last Train</div>
+                      <div value="departure">出発</div>
+                      <div value="arrival">到着</div>
+                      <div value="first">始発</div>
+                      <div value="last">終電</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="paymentType">Payment Type</div>
+                      <div class="paymentType">運賃</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="paymentType">
-                      <div value="ic">IC Card</div>
-                      <div value="ticket">Ticket</div>
+                      <div value="ic">ICカード利用</div>
+                      <div value="ticket">切符利用</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="discountType">Discount Type</div>
-                      <ion-icon name="chevron-down-outline"></ion-icon>
-                    </div>
-                    <div class="select" id="discountType">
-                      <div value="none">None</div>
-                      <div value="zipangu">Zipangu</div>
-                      <div value="zipangu_first">Zipangu First</div>
-                      <div value="otona_zipangu">Otona Zipangu</div>
-                      <div value="otona_middle">Otona Middle</div>
-                      <div value="otona_west">Otona West</div>
-                      <div value="shikoku_zipangu">Shikoku Zipangu</div>
-                    </div>
-                  </div>
-
-                  <div class="setting-group">
-                    <div class="setting">
-                      <div class="commuteType">Commute Type</div>
-                      <ion-icon name="chevron-down-outline"></ion-icon>
-                    </div>
-                    <div class="select" id="commuteType">
-                      <div value="commute">Commute</div>
-                      <div value="offpeak_commute">Off-peak Commute</div>
-                      <div value="university">University</div>
-                      <div value="highschool">High School</div>
-                      <div value="junior">Junior High</div>
-                    </div>
-                  </div>
-
-                  <div class="setting-group">
-                    <div class="setting">
-                      <div class="expressTrainUse">Express Train Use</div>
+                      <div class="expressTrainUse">有料特急</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="expressTrainUse">
-                      <div value="allow">Allow</div>
-                      <div value="prefer">Prefer</div>
-                      <div value="avoid">Avoid</div>
-                      <div value="forbid">Forbid</div>
+                      <div value="allow">あまかせ</div>
+                      <div value="prefer">なるべく利用</div>
+                      <div value="avoid">ひかえる</div>
+                      <div value="forbid">使わない</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="airplaneUse">Airplane Use</div>
+                      <div class="airplaneUse">飛行機</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="airplaneUse">
-                      <div value="forbid">Forbid</div>
-                      <div value="allow">Allow</div>
+                      <div value="forbid">使わない</div>
+                      <div value="allow">あまかせ</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="busUse">Bus Use</div>
+                      <div class="busUse">高速バス</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="busUse">
-                      <div value="forbid">Forbid</div>
-                      <div value="allow">Allow</div>
+                      <div value="forbid">使わない</div>
+                      <div value="allow">あまかせ</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="allowCarTaxi">Allow Car/Taxi</div>
+                      <div class="allowCarTaxi">車・タクシーを検索する</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="allowCarTaxi">
-                      <div value="true">Allow</div>
-                      <div value="false">Forbid</div>
+                      <div value="false">使わない</div>
+                      <div value="true">あまかせ</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="allowBike">Allow Bike</div>
+                      <div class="allowBike">自転車(シェアサイクル)を検索する</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="allowBike">
-                      <div value="true">Allow</div>
-                      <div value="false">Forbid</div>
+                      <div value="false">使わない</div>
+                      <div value="true">あまかせ</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="sort">Sort By</div>
+                      <div class="sort">検索結果の表示順</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="sort">
-                      <div value="recommend">Recommended</div>
-                      <div value="arrival">Arrival Time</div>
-                      <div value="duration">Fastest</div>
-                      <div value="transfer">Least Transfers</div>
-                      <div value="price">Cheapest</div>
+                      <div value="recommend">おすすめ順</div>
+                      <div value="arrival">到着が早い・出発が遅い順</div>
+                      <div value="duration">所要時間順</div>
+                      <div value="transfer">乗換回数順</div>
+                      <div value="price">安い順</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="seatPreference">Seat Preference</div>
+                      <div class="seatPreference">座席</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="seatPreference">
-                      <div value="any">Any</div>
-                      <div value="reserved">Reserved</div>
-                      <div value="free">Free Seating</div>
-                      <div value="green">Green Car</div>
+                      <div value="any">おまかせ</div>
+                      <div value="reserved">指定席優先</div>
+                      <div value="free">自由席優先</div>
+                      <div value="green">グリーン席優先</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="preferredTrain">Preferred Train</div>
+                      <div class="preferredTrain">優先列車</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="preferredTrain">
-                      <div value="nozomi">Nozomi</div>
-                      <div value="hikari">Hikari</div>
-                      <div value="local">Local</div>
+                      <div value="nozomi">のぞみ優先</div>
+                      <div value="hikari">ひかりも表示</div>
+                      <div value="local">各駅停車優先</div>
                     </div>
                   </div>
 
                   <div class="setting-group">
                     <div class="setting">
-                      <div class="transferTime">Transfer Time</div>
+                      <div class="transferTime">乗換時間</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
                     </div>
                     <div class="select" id="transferTime">
-                      <div value="normal">Normal</div>
-                      <div value="short">Short</div>
-                      <div value="relaxed">Relaxed</div>
+                      <div value="normal">標準</div>
+                      <div value="short">短め</div>
+                      <div value="relaxed">余裕を持つ</div>
                     </div>
                   </div>
 
-                  <div class="setting-group">
+                  <!-- <div class="setting-group">
                     <div class="setting">
                       <div class="searchType">Search Type</div>
                       <ion-icon name="chevron-down-outline"></ion-icon>
@@ -220,13 +190,16 @@
                     <div class="select" id="searchType">
                       <div value="1">Standard</div>
                     </div>
-                  </div>
+                  </div> -->
                 </div>
               </div>
             </form>
           </div>
         </div>
-        <button id="submit">Submit</button>
+        <div id="interstitial">
+          <video src="assets/img/shinkansen.mp4" loop muted autoplay></video>
+          <!-- <div id="photo"></div> -->
+        </div>
       </div>
     </div>
 

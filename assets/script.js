@@ -41,11 +41,15 @@ $(document).ready(function () {
       <div class="item-container">
         <div class="item-contents">
           <div class="item"><span>${label}:</span>
-            <input type="text" name="Location" value="${value}" placeholder="…">
+            <input type="text" name="Location" value="${value}" autocomplete="off" placeholder="…">
           </div>
         </div>
       </div>
     `;
+  }
+  function refreshVerticalClass() {
+    const count = $('#items .item-container').length;
+    $('#app').toggleClass('vertical', count >= 5);
   }
   const params = new URLSearchParams(window.location.search);
   function prefill() {
@@ -56,10 +60,10 @@ $(document).ready(function () {
 
     $('#items').empty();
 
-    $('#items').append(createItemContainer('From', from));
+    $('#items').append(createItemContainer('出発地', from));
 
     bys.forEach((b, index) => {
-      const byItem = $(createItemContainer('By', b));
+      const byItem = $(createItemContainer('経由地', b));
       $('#items').append(byItem);
       const byTime = byTimes[index] || '6';
       byItem.append(`
@@ -75,11 +79,11 @@ $(document).ready(function () {
     });
 
     if (bys.length === 0) {
-      const emptyBy = $(createItemContainer('By'));
+      const emptyBy = $(createItemContainer('経由地'));
       $('#items').append(emptyBy);
       emptyBy.find('.close').remove();
     }
-    const toItem = $(createItemContainer('To', to));
+    const toItem = $(createItemContainer('到着地', to));
     $('#items').append(toItem);
 
     if (!to) {
@@ -116,7 +120,7 @@ $(document).ready(function () {
     }
 
     [
-      'departOrArrive', 'paymentType', 'discountType', 'commuteType',
+      'departOrArrive', 'paymentType',
       'airplaneUse', 'busUse', 'expressTrainUse',
       'allowCarTaxi', 'allowBike',
       'sort', 'seatPreference', 'preferredTrain',
@@ -130,20 +134,18 @@ $(document).ready(function () {
       }
     });
 
-    if ($('#items .item-container').length > 2) {
-      $('#app').addClass('vertical');
-    }
-
     const inputs = $('#items .item input[name="Location"]');
     const required = [inputs.eq(0), inputs.eq(1), inputs.eq(inputs.length - 1)];
-    const missing = required.some($el => !$el.val().trim());
-    if (params.has('from') && (params.has('to') || params.has('by'))) {
-      setTimeout(() => triggerSearch(false), 100);
+    const allFilled = required.every($el => $el.val().trim());
+    if (allFilled) {
+      triggerSearch(false);
     }
+    refreshVerticalClass();
+    $('#dates').append('<div id="search"><ion-icon name="search-outline"></ion-icon></div>');
   }
 
   prefill();
-  const maxStops = 4;
+  const maxStops = 6;
   function refreshMoreIcons() {
     $('#items .item-container').each(function (i) {
       const $ct = $(this);
@@ -172,7 +174,7 @@ $(document).ready(function () {
   refreshCloses();
   $('#items .item-container').first().find('input[name="Location"]').attr('id', 'from');
   $('#items .item-container').last().find('input[name="Location"]').attr('id', 'to');
-  function renderTrips(data, $ct) {
+  function renderTrips(data, $ct, legIndex) {
     let arr = [];
     if (Array.isArray(data.results)) {
       arr = data.results;
@@ -242,15 +244,19 @@ $(document).ready(function () {
       const sd = trip.date || '';
       let departureDate = '', arrivalDate = '';
       if (sd) {
-        [departureDate, arrivalDate] = sd.split(' → ');
+        const parts = sd.split(' → ');
+        departureDate = parts[0];
+        arrivalDate = parts[1] || parts[0];
       }
       const departureTime = trip.departureTime || '';
       const arrivalTime = trip.arrivalTime || '';
-      let formattedDeparture = departureTime;
-      let formattedArrival = arrivalTime;
-      if (departureDate && arrivalDate) {
-        formattedDeparture = departureDate + ' ' + departureTime;
-        formattedArrival = arrivalDate + ' ' + arrivalTime;
+      let formattedDeparture, formattedArrival;
+      if (departureDate && arrivalDate && departureDate !== arrivalDate) {
+        formattedDeparture = `${departureDate} ${departureTime}`;
+        formattedArrival = `${arrivalDate}   ${arrivalTime}`;
+      } else {
+        formattedDeparture = departureTime;
+        formattedArrival = arrivalTime;
       }
       const $trip = $('<div>').addClass('trip'),
         $top = $('<div>').addClass('trip-data top'),
@@ -259,12 +265,20 @@ $(document).ready(function () {
         $info = $('<div>').addClass('info')
           .append(
             $('<div>').addClass('departure')
-              .append($('<div>').addClass('date').text(formattedDeparture))
+              .append($('<div>').addClass('date').text(
+                departureDate !== arrivalDate
+                  ? `${formatDateWithoutYear(departureDate)} ${departureTime}`
+                  : departureTime
+              ))
               .append($('<div>').addClass('place').text(trip.stations[0]?.stationName || ''))
           )
           .append(
             $('<div>').addClass('arrival')
-              .append($('<div>').addClass('date').text(formattedArrival))
+              .append($('<div>').addClass('date').text(
+                departureDate !== arrivalDate
+                  ? `${formatDateWithoutYear(arrivalDate)} ${arrivalTime}`
+                  : arrivalTime
+              ))
               .append($('<div>').addClass('place').text(trip.stations.slice(-1)[0]?.stationName || ''))
           );
       const $meta = $('<div>').addClass('bottom')
@@ -273,6 +287,8 @@ $(document).ready(function () {
         .append($('<div>').addClass('emission').html(`<span>CO₂</span>${trip.co2.emission}`))
         .append($('<div>').addClass('co2-red').html(`<span>自動車比</span>${trip.co2.reduction}`))
         .append($('<div>').addClass('price').html(`<span>総額</span>${trip.price}`));
+      $trip.attr('data-departure-date', departureDate);
+      $trip.attr('data-arrival-date', arrivalDate);
       $l.append($info, $meta);
       $r.html('<div class="moreInfo"><ion-icon name="chevron-down-outline"></ion-icon></div>');
       $top.append($l, $r);
@@ -284,8 +300,17 @@ $(document).ready(function () {
           changesLookup[change.stationName] = change;
         });
       }
+      let lastDate = null;
+
       trip.stations.forEach((stationObj, i) => {
         const stationName = stationObj?.stationName || (typeof stationObj === 'string' ? stationObj : '');
+        const date = stationObj?.date || '';
+
+        if (date && date !== lastDate) {
+          $timeline.append(`<div class="day-separator">${date}</div>`);
+          lastDate = date;
+        }
+
         let transferTimeStr = null;
         let waitTimeStr = null;
         let arrivalPlatform = null;
@@ -300,13 +325,29 @@ $(document).ready(function () {
         }
 
         $timeline.append(makeStop(stationName, transferTimeStr, waitTimeStr, arrivalPlatform, departurePlatform));
+
         if (i < trip.segments.length) {
           const currentSegmentData = trip.segments[i];
           const $segmentDiv = $('<div>').addClass('segment');
           const $sgt = $('<div>').addClass('segTiming');
           const $ln = $('<div>').addClass('seg-line');
-          $sgt.append($('<div>').addClass('seg-time').text(`${currentSegmentData.departure} → ${currentSegmentData.arrival}`))
-            .append($('<div>').addClass('seg-duration').text(currentSegmentData.duration));
+
+          if (departureDate !== arrivalDate) {
+            $sgt.append(
+              $('<div>').addClass('seg-time').text(
+                `${departureDate} ${currentSegmentData.departure}` +
+                ` → ${arrivalDate} ${currentSegmentData.arrival}`
+              )
+            );
+          } else {
+            $sgt.append(
+              $('<div>').addClass('seg-time').text(
+                `${currentSegmentData.departure} → ${currentSegmentData.arrival}`
+              )
+            );
+          }
+
+          $sgt.append($('<div>').addClass('seg-duration').text(currentSegmentData.duration));
 
           if (currentSegmentData.color) {
             const $col = $('<span>').addClass('line-color')
@@ -314,13 +355,17 @@ $(document).ready(function () {
             if (currentSegmentData.striped) $col.addClass('stripe');
             $ln.append($col);
           }
+
           $ln.append(currentSegmentData.timeLink ? $('<p>').text(currentSegmentData.line) : $('<span>').text(currentSegmentData.line));
+
           $segmentDiv.append($sgt, $ln)
             .append($('<div>').addClass('seg-distance').text(currentSegmentData.distance))
             .append($('<div>').addClass('seg-fare').text(currentSegmentData.fare));
+
           if (currentSegmentData.seatFare) {
             $segmentDiv.append($('<div>').addClass('seg-seatfare').text(currentSegmentData.seatFare));
           }
+
           $timeline.append($segmentDiv);
         }
       });
@@ -340,13 +385,14 @@ $(document).ready(function () {
     }
 
     $('#notification').empty();
+    $('#notification').removeClass("active");
     const raw = allItems.map((i, el) => $(el).val().trim()).get();
     const depVal = $('input[name="Departure"]').val(),
       retVal = $('input[name="Return"]').val();
 
     const filters = {};
     [
-      'departOrArrive', 'paymentType', 'discountType', 'commuteType',
+      'departOrArrive', 'paymentType', 'discountType',
       'airplaneUse', 'busUse', 'expressTrainUse',
       'allowCarTaxi', 'allowBike',
       'sort', 'seatPreference', 'preferredTrain',
@@ -394,14 +440,66 @@ $(document).ready(function () {
         $list = $('<div>').addClass('trip-list');
       $('#loader').before($grp.append($list));
       try {
-        const data = await $.getJSON(url);
-        if (data.notification) {
+        let data;
+        try {
+          data = await $.getJSON(url);
+        } catch (err) {
           $('#notification').addClass('active').html(`
             <ion-icon name="alert-circle-outline"></ion-icon>
-            <p>${data.notification}</p>
+            <p>データ取得に失敗しました。</p>
+          `);
+          $list.append($('<div>').addClass('error').text('データが無効です'));
+          return;
+        }
+        if (data.results && data.results.correction) {
+          const info = data.results.correction.split(',');
+          const msg = info.map(s => {
+            const [label, val] = s.split(':');
+            const [from, to] = val.split('→');
+            return `<p>${label === 'from' ? '出発地' : '到着地'}:「${from}」が「${to}」に修正されました。</p>`;
+          }).join('');
+
+          const $notif = $('#notification');
+          $notif.addClass('active');
+          if (!$notif.find('.notifications').length) {
+            $notif.html(`<ion-icon name="information-circle-outline"></ion-icon><div class="notifications"></div>`);
+          }
+          $notif.find('.notifications').append(msg);
+        }
+        if (data.notification) {
+          if (data.notification.startsWith('station_not_found:')) {
+            const station = data.notification.split(':')[1];
+            $('#notification').addClass('active').html(`
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <p>「${station}」という駅は見つかりませんでした。</p>
+          `);
+          } else if (data.notification.startsWith('station_corrected:')) {
+            const info = data.notification.replace('station_corrected:', '').split(',');
+            const msg = info.map(s => {
+              const [label, val] = s.split(':');
+              const [from, to] = val.split('->');
+              return `${label === 'from' ? '出発地' : '到着地'}:「${from}」→「${to}」`;
+            }).join('<br>');
+            $('#notification').addClass('active').html(`
+              <ion-icon name="information-circle-outline"></ion-icon>
+              <p>${msg}</p>
+            `);
+          } else {
+            $('#notification').addClass('active').html(`
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <p>${data.notification}</p>
+            `);
+          }
+          return;
+        }
+        const resultArray = Array.isArray(data.results) ? data.results : data.results?.results;
+        if ((!resultArray || !resultArray.length) && !data.notification) {
+          $('#notification').addClass('active').html(`
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <p>入力内容をご確認ください。</p>
           `);
         }
-        renderTrips(data, $list);
+        renderTrips(data, $list, idx);
         const first = Array.isArray(data.results) ? data.results[0] : data.results.results[0];
         const [arrH, arrM] = first.arrivalTime.split(':').map(Number);
         currentDeparture.setHours(arrH);
@@ -431,8 +529,8 @@ $(document).ready(function () {
 
     legs.each(function (i) {
       const $trip = $(this);
-      const dep = $trip.find('.departure .date').text().trim();
-      const arr = $trip.find('.arrival .date').text().trim();
+      const dep = $trip.attr('data-departure-date') + ' ' + $trip.find('.departure .date').text().trim();
+      const arr = $trip.attr('data-arrival-date') + ' ' + $trip.find('.arrival .date').text().trim();
       if (i === 0) globalDeparture = dep;
       if (i === legs.length - 1) globalArrival = arr;
 
@@ -451,35 +549,43 @@ $(document).ready(function () {
         totalSeatFare += parseInt(txt, 10) || 0;
       });
     });
-
     const totalFareYen = totalFare.toLocaleString() + '円';
     const totalSeatFareYen = totalSeatFare > 0 ? `+ 指定席 ${totalSeatFare.toLocaleString()}円` : '';
     const totalDistanceKm = totalDistance.toFixed(1) + 'km';
-
+    const datePattern = /^\d{2}\/\d{2}/;
+    const depText = (/^\d{2}\/\d{2}/.test(globalDeparture) || datePattern.test(globalDeparture))
+      ? `出発: ${globalDeparture}`
+      : `出発時刻: ${globalDeparture}`;
+    const arrText = (/^\d{2}\/\d{2}/.test(globalArrival) || datePattern.test(globalArrival))
+      ? `到着: ${globalArrival}`
+      : `到着時刻: ${globalArrival}`;
     const summaryHtml = `
-    <div class="summary-item header">まとめ</div>
-    <div class="summary-item">出発:${globalDeparture}</div>
-    <div class="summary-item">到着:${globalArrival}</div>
-    <div class="summary-item">距離:${totalDistanceKm}</div>
-    <div class="summary-item">合計料金:${totalFareYen} ${totalSeatFareYen}</div>
-  `;
-
+      <div class="summary-item header">まとめ</div>
+      <div class="summary-item">${depText}</div>
+      <div class="summary-item">${arrText}</div>
+      <div class="summary-item">距離: ${totalDistanceKm}</div>
+      <div class="summary-item">合計料金: ${totalFareYen} ${totalSeatFareYen}</div>
+    `;
     $('#summary').html(summaryHtml).addClass("active");
     $('#loader').removeClass('active');
+    $('#app').removeClass('start');
   }
-
+  $('#dates').on('click', '#search', function (e) {
+    e.stopPropagation();
+    triggerSearch();
+  });
   $('#trips').off('click', '.trip').on('click', '.trip', function () {
     $(this).toggleClass('active');
     $(this).find('.moreInfo').toggleClass('active');
   });
   $('#items').on('click', '.more', function (e) {
     e.preventDefault();
-    if ($('#items .item-container').length >= maxStops + 2) return;
-    $('#app').addClass('vertical');
+    if ($('#items .item-container').length >= maxStops) return;
     const $parent = $(this).closest('.item-container');
-    $parent.after(createItemContainer('By'));
+    $parent.after(createItemContainer('経由地'));
     refreshMoreIcons();
     refreshCloses();
+    refreshVerticalClass();
   });
   $('#items').on('click', '.close', function (e) {
     e.stopPropagation();
@@ -507,6 +613,7 @@ $(document).ready(function () {
     refreshMoreIcons();
     refreshCloses();
     triggerSearch();
+    refreshVerticalClass();
   });
   $('#items').on('input', 'input[name="Location"]', function () {
     const $ct = $(this).closest('.item-container');
@@ -598,6 +705,33 @@ $(document).ready(function () {
       triggerSearch();
     }
   });
+  const itemsSlider = document.querySelector('#items');
+  let isDownItems = false, startXItems, scrollLeftItems;
+
+  itemsSlider.addEventListener('mousedown', e => {
+    isDownItems = true;
+    itemsSlider.classList.add('active');
+    startXItems = e.pageX - itemsSlider.offsetLeft;
+    scrollLeftItems = itemsSlider.scrollLeft;
+  });
+
+  itemsSlider.addEventListener('mouseleave', () => {
+    isDownItems = false;
+    itemsSlider.classList.remove('active');
+  });
+
+  itemsSlider.addEventListener('mouseup', () => {
+    isDownItems = false;
+    itemsSlider.classList.remove('active');
+  });
+
+  itemsSlider.addEventListener('mousemove', e => {
+    if (!isDownItems) return;
+    e.preventDefault();
+    const x = e.pageX - itemsSlider.offsetLeft;
+    const walk = x - startXItems;
+    itemsSlider.scrollLeft = scrollLeftItems - walk;
+  });
   const slider = document.querySelector('#settings-list');
   let isDown = false, startX, scrollLeft;
   slider.addEventListener('mousedown', e => {
@@ -681,5 +815,15 @@ $(document).ready(function () {
         $fromField.val(name);
       }
     });
+  }
+
+  if (window.innerWidth < 900) {
+    const $search = $('#search');
+    const $target = $('#main');
+
+    $search.css({ opacity: 0, position: 'relative', top: '-10px' });
+    $target.after($search);
+
+    $search.animate({ opacity: 1, top: 0 }, 400);
   }
 });
